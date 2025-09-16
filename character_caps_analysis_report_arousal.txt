@@ -1,0 +1,174 @@
+CHARACTER-CAPs ASSOCIATION ANALYSIS REPORT
+==================================================
+
+Analysis Type: Character significance weighted by arousal
+Objective: Examine brain-social processing relationships
+Characters: Dusty, Nancy, Steve (Stranger Things)
+
+1. CHARACTER-CAP CORRELATION ANALYSIS (Pearson r)
+--------------------------------------------------
+Total correlations tested: 60
+Significant correlations (p < 0.05): 5
+
+Significant character-CAP associations:
+  CAP_3 transitions_out - nancy: r = 1.000, p = 0.000
+  CAP_3 transitions_out - steve: r = 1.000, p = 0.000
+  CAP_1 transitions_out - nancy: r = 1.000, p = 0.000
+  CAP_1 transitions_out - steve: r = 1.000, p = 0.000
+  CAP_4 avg_dwell_time - dusty: r = 0.998, p = 0.039
+
+All character-CAP correlations:
+
+DUSTY Character Associations:
+  CAP_2 frequency_pct: r = 0.952, p = 0.199 (n = 3)
+  CAP_2 avg_dwell_time: r = 0.965, p = 0.169 (n = 3)
+  CAP_2 transitions_out: r = 0.918, p = 0.260 (n = 3)
+  CAP_2 transition_rate: r = 0.537, p = 0.639 (n = 3)
+  CAP_3 frequency_pct: r = -0.204, p = 0.869 (n = 3)
+  CAP_3 avg_dwell_time: r = 0.690, p = 0.516 (n = 3)
+  CAP_3 transitions_out: r = 0.189, p = 0.879 (n = 3)
+  CAP_3 transition_rate: r = 0.956, p = 0.189 (n = 3)
+  CAP_1 frequency_pct: r = -0.841, p = 0.364 (n = 3)
+  CAP_1 avg_dwell_time: r = -0.942, p = 0.217 (n = 3)
+  CAP_1 transitions_out: r = 0.189, p = 0.879 (n = 3)
+  CAP_1 transition_rate: r = 0.818, p = 0.390 (n = 3)
+  CAP_5 frequency_pct: r = 0.124, p = 0.921 (n = 3)
+  CAP_5 avg_dwell_time: r = 0.959, p = 0.182 (n = 3)
+  CAP_5 transitions_out: r = 0.991, p = 0.084 (n = 3)
+  CAP_5 transition_rate: r = 0.985, p = 0.111 (n = 3)
+  CAP_4 frequency_pct: r = 0.487, p = 0.676 (n = 3)
+  CAP_4 avg_dwell_time: r = 0.998, p = 0.039* (n = 3)
+  CAP_4 transitions_out: r = 0.875, p = 0.321 (n = 3)
+  CAP_4 transition_rate: r = 0.962, p = 0.176 (n = 3)
+
+NANCY Character Associations:
+  CAP_2 frequency_pct: r = -0.122, p = 0.922 (n = 3)
+  CAP_2 avg_dwell_time: r = -0.075, p = 0.952 (n = 3)
+  CAP_2 transitions_out: r = -0.217, p = 0.861 (n = 3)
+  CAP_2 transition_rate: r = -0.727, p = 0.482 (n = 3)
+  CAP_3 frequency_pct: r = 0.923, p = 0.252 (n = 3)
+  CAP_3 avg_dwell_time: r = 0.841, p = 0.363 (n = 3)
+  CAP_3 transitions_out: r = 1.000, p = 0.000* (n = 3)
+  CAP_3 transition_rate: r = 0.468, p = 0.690 (n = 3)
+  CAP_1 frequency_pct: r = 0.373, p = 0.757 (n = 3)
+  CAP_1 avg_dwell_time: r = 0.151, p = 0.904 (n = 3)
+  CAP_1 transitions_out: r = 1.000, p = 0.000* (n = 3)
+  CAP_1 transition_rate: r = 0.719, p = 0.489 (n = 3)
+  CAP_5 frequency_pct: r = -0.951, p = 0.200 (n = 3)
+  CAP_5 avg_dwell_time: r = 0.458, p = 0.697 (n = 3)
+  CAP_5 transitions_out: r = 0.058, p = 0.963 (n = 3)
+  CAP_5 transition_rate: r = 0.357, p = 0.768 (n = 3)
+  CAP_4 frequency_pct: r = 0.950, p = 0.203 (n = 3)
+  CAP_4 avg_dwell_time: r = 0.249, p = 0.840 (n = 3)
+  CAP_4 transitions_out: r = 0.640, p = 0.557 (n = 3)
+  CAP_4 transition_rate: r = 0.450, p = 0.703 (n = 3)
+
+STEVE Character Associations:
+  CAP_2 frequency_pct: r = -0.122, p = 0.922 (n = 3)
+  CAP_2 avg_dwell_time: r = -0.075, p = 0.952 (n = 3)
+  CAP_2 transitions_out: r = -0.217, p = 0.861 (n = 3)
+  CAP_2 transition_rate: r = -0.727, p = 0.482 (n = 3)
+  CAP_3 frequency_pct: r = 0.923, p = 0.252 (n = 3)
+  CAP_3 avg_dwell_time: r = 0.841, p = 0.363 (n = 3)
+  CAP_3 transitions_out: r = 1.000, p = 0.000* (n = 3)
+  CAP_3 transition_rate: r = 0.468, p = 0.690 (n = 3)
+  CAP_1 frequency_pct: r = 0.373, p = 0.757 (n = 3)
+  CAP_1 avg_dwell_time: r = 0.151, p = 0.904 (n = 3)
+  CAP_1 transitions_out: r = 1.000, p = 0.000* (n = 3)
+  CAP_1 transition_rate: r = 0.719, p = 0.489 (n = 3)
+  CAP_5 frequency_pct: r = -0.951, p = 0.200 (n = 3)
+  CAP_5 avg_dwell_time: r = 0.458, p = 0.697 (n = 3)
+  CAP_5 transitions_out: r = 0.058, p = 0.963 (n = 3)
+  CAP_5 transition_rate: r = 0.357, p = 0.768 (n = 3)
+  CAP_4 frequency_pct: r = 0.950, p = 0.203 (n = 3)
+  CAP_4 avg_dwell_time: r = 0.249, p = 0.840 (n = 3)
+  CAP_4 transitions_out: r = 0.640, p = 0.557 (n = 3)
+  CAP_4 transition_rate: r = 0.450, p = 0.703 (n = 3)
+
+==================================================
+
+2. CHARACTER-CAP MIXED EFFECTS MODELS
+--------------------------------------------------
+Total LME models run: 30
+Significant models (p < 0.05): 3
+
+Significant character-CAP LME results:
+  CAP_2 avg_dwell_time - dusty: β = 6.821, p = 0.016
+  CAP_5 frequency_pct - nancy: β = -47.418, p = 0.002
+  CAP_5 frequency_pct - steve: β = -15.806, p = 0.002
+
+All LME results by character:
+
+DUSTY:
+  CAP_2 frequency_pct: β = 14.360, p = 0.287
+  CAP_2 avg_dwell_time: β = 6.821, p = 0.016*
+  CAP_3 frequency_pct: β = -3.988, p = 0.829
+  CAP_3 avg_dwell_time: β = 6.417, p = 0.341
+  CAP_1 frequency_pct: β = -9.080, p = 0.345
+  CAP_1 avg_dwell_time: β = -2.581, p = 0.467
+  CAP_5 frequency_pct: β = 2.335, p = 0.901
+  CAP_5 avg_dwell_time: β = 1.876, p = 0.556
+  CAP_4 frequency_pct: β = 3.542, p = 0.720
+  CAP_4 avg_dwell_time: β = 3.512, p = 0.353
+
+NANCY:
+  CAP_2 frequency_pct: β = -4.876, p = 0.906
+  CAP_2 avg_dwell_time: β = -1.403, p = 0.940
+  CAP_3 frequency_pct: β = 47.677, p = 0.268
+  CAP_3 avg_dwell_time: β = 20.714, p = 0.119
+  CAP_1 frequency_pct: β = 10.651, p = 0.702
+  CAP_1 avg_dwell_time: β = 1.091, p = 0.925
+  CAP_5 frequency_pct: β = -47.418, p = 0.002*
+  CAP_5 avg_dwell_time: β = 2.371, p = 0.792
+  CAP_4 frequency_pct: β = 18.264, p = 0.454
+  CAP_4 avg_dwell_time: β = 2.322, p = 0.850
+
+STEVE:
+  CAP_2 frequency_pct: β = -1.625, p = 0.906
+  CAP_2 avg_dwell_time: β = -0.468, p = 0.940
+  CAP_3 frequency_pct: β = 15.892, p = 0.268
+  CAP_3 avg_dwell_time: β = 6.905, p = 0.119
+  CAP_1 frequency_pct: β = 3.550, p = 0.702
+  CAP_1 avg_dwell_time: β = 0.364, p = 0.925
+  CAP_5 frequency_pct: β = -15.806, p = 0.002*
+  CAP_5 avg_dwell_time: β = 0.790, p = 0.792
+  CAP_4 frequency_pct: β = 6.088, p = 0.454
+  CAP_4 avg_dwell_time: β = 0.774, p = 0.850
+
+==================================================
+
+3. CHARACTER-TRANSITION ANALYSES
+--------------------------------------------------
+Character significance correlations with brain state transitions:
+
+DUSTY Transition Correlations:
+  CAP_2: r = 0.918, p = 0.260
+  CAP_3: r = 0.189, p = 0.879
+  CAP_1: r = 0.189, p = 0.879
+  CAP_5: r = 0.991, p = 0.084
+  CAP_4: r = 0.875, p = 0.321
+
+NANCY Transition Correlations:
+  CAP_2: r = -0.217, p = 0.861
+  CAP_3: r = 1.000, p = 0.000*
+  CAP_1: r = 1.000, p = 0.000*
+  CAP_5: r = 0.058, p = 0.963
+  CAP_4: r = 0.640, p = 0.557
+
+STEVE Transition Correlations:
+  CAP_2: r = -0.217, p = 0.861
+  CAP_3: r = 1.000, p = 0.000*
+  CAP_1: r = 1.000, p = 0.000*
+  CAP_5: r = 0.058, p = 0.963
+  CAP_4: r = 0.640, p = 0.557
+
+==================================================
+* p < 0.05
+
+INTERPRETATION:
+- Positive correlations: Higher character significance → more CAP activity
+- Negative correlations: Higher character significance → less CAP activity
+- This extends emotional arousal analysis to socioemotional arousal
+- Results inform brain-social processing relationships
+
+Analysis completed.

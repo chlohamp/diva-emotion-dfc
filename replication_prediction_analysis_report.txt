@@ -1,0 +1,51 @@
+REPLICATION & PREDICTION ANALYSIS REPORT
+==================================================
+
+OBJECTIVE: Test within-person replication and prediction of CAP-emotion relationships
+DESIGN: Multi-session design with different episodes per run
+ANALYSIS: Session 1 vs Session 2 replication + Session 1→Session 2 prediction
+
+1. REPLICATION ANALYSIS
+------------------------------
+Session-wise CAP-emotion correlation summary:
+  Session 1: Mean r = 0.090 (SD = 0.314)
+  Session 2: Mean r = 0.156 (SD = 0.281)
+  Significant correlations - Session 1: 3
+  Significant correlations - Session 2: 2
+
+2. PREDICTION ANALYSIS
+------------------------------
+Model performance summary (Session 1 → Session 2 prediction):
+
+Valence Prediction:
+  Linear Regression: R² = -0.663, RMSE = 1.726, r = 0.238
+  Ridge Regression: R² = -0.388, RMSE = 1.576, r = 0.220
+  Lasso Regression: R² = -0.154, RMSE = 1.437, r = 0.176
+  Random Forest: R² = -0.038, RMSE = 1.364, r = 0.095 (BEST)
+  Top features: CAP_4_frequency_pct, CAP_5_transition_rate, CAP_1_avg_dwell_time, CAP_5_transitions_out, CAP_5_frequency_pct
+
+Arousal Prediction:
+  Linear Regression: R² = -8.784, RMSE = 3.887, r = -0.100
+  Ridge Regression: R² = -3.153, RMSE = 2.533, r = -0.093
+  Lasso Regression: R² = -0.766, RMSE = 1.652, r = 0.018
+  Random Forest: R² = -0.234, RMSE = 1.381, r = -0.060 (BEST)
+  Top features: CAP_1_frequency_pct, CAP_5_frequency_pct, CAP_2_frequency_pct, CAP_3_frequency_pct, CAP_5_transition_rate
+
+Prediction Summary:
+  Emotions with successful prediction (R² > 0.1): 0/2
+  Mean best R² across emotions: -0.136
+  Max R² achieved: -0.038
+
+3. INTERPRETATION & IMPLICATIONS
+----------------------------------------
+REPLICATION FINDINGS:
+
+PREDICTION FINDINGS:
+- WEAK predictive power: Limited ability to predict emotions from CAPs
+
+CONCLUSIONS:
+- Within-person CAP-emotion relationships tested across multiple sessions
+- Results inform reliability and generalizability of CAP-based emotion models
+- Framework applicable to real multi-session neuroimaging studies
+
+Analysis completed.

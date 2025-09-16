@@ -1,0 +1,16 @@
+cap	character	metric	analysis	correlation	p_value	n
+CAP_2	dusty	transitions_out	correlation_with_character_significance	0.917662935482247	0.2601469382930061	3
+CAP_2	nancy	transitions_out	correlation_with_character_significance	-0.21677749238103003	0.8608907800306709	3
+CAP_2	steve	transitions_out	correlation_with_character_significance	-0.21677749238103006	0.8608907800306709	3
+CAP_3	dusty	transitions_out	correlation_with_character_significance	0.1889822365046136	0.8789622816763233	3
+CAP_3	nancy	transitions_out	correlation_with_character_significance	1.0	0.0	3
+CAP_3	steve	transitions_out	correlation_with_character_significance	1.0	0.0	3
+CAP_1	dusty	transitions_out	correlation_with_character_significance	0.1889822365046136	0.8789622816763233	3
+CAP_1	nancy	transitions_out	correlation_with_character_significance	1.0	0.0	3
+CAP_1	steve	transitions_out	correlation_with_character_significance	1.0	0.0	3
+CAP_5	dusty	transitions_out	correlation_with_character_significance	0.9912407071619302	0.08432321632194426	3
+CAP_5	nancy	transitions_out	correlation_with_character_significance	0.05763904177042348	0.963285497998267	3
+CAP_5	steve	transitions_out	correlation_with_character_significance	0.05763904177042346	0.963285497998267	3
+CAP_4	dusty	transitions_out	correlation_with_character_significance	0.8751857342005339	0.3214781685189044	3
+CAP_4	nancy	transitions_out	correlation_with_character_significance	0.6404640308067906	0.5574841131574191	3
+CAP_4	steve	transitions_out	correlation_with_character_significance	0.6404640308067906	0.5574841131574191	3

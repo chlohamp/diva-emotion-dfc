@@ -1,0 +1,89 @@
+EMOTION-CAPs CORRELATION ANALYSIS REPORT
+==================================================
+
+1. CORRELATION ANALYSIS (Pearson r)
+----------------------------------------
+Total correlations tested: 40
+Significant correlations (p < 0.05): 0
+
+
+All correlations:
+  CAP_2 frequency_pct - valence: r = -0.827, p = 0.380 (n = 3)
+  CAP_2 frequency_pct - arousal: r = -0.968, p = 0.160 (n = 3)
+  CAP_2 avg_dwell_time - valence: r = 0.231, p = 0.852 (n = 3)
+  CAP_2 avg_dwell_time - arousal: r = 0.883, p = 0.311 (n = 3)
+  CAP_2 transitions_out - valence: r = -0.077, p = 0.951 (n = 3)
+  CAP_2 transitions_out - arousal: r = -0.799, p = 0.411 (n = 3)
+  CAP_2 transition_rate - valence: r = 0.790, p = 0.420 (n = 3)
+  CAP_2 transition_rate - arousal: r = 0.063, p = 0.960 (n = 3)
+  CAP_4 frequency_pct - valence: r = -0.402, p = 0.737 (n = 3)
+  CAP_4 frequency_pct - arousal: r = -0.953, p = 0.196 (n = 3)
+  CAP_4 avg_dwell_time - valence: r = -0.070, p = 0.955 (n = 3)
+  CAP_4 avg_dwell_time - arousal: r = -0.795, p = 0.415 (n = 3)
+  CAP_4 transitions_out - valence: r = -0.152, p = 0.903 (n = 3)
+  CAP_4 transitions_out - arousal: r = -0.842, p = 0.363 (n = 3)
+  CAP_4 transition_rate - valence: r = -0.463, p = 0.694 (n = 3)
+  CAP_4 transition_rate - arousal: r = 0.359, p = 0.766 (n = 3)
+  CAP_1 frequency_pct - valence: r = -0.493, p = 0.672 (n = 3)
+  CAP_1 frequency_pct - arousal: r = -0.979, p = 0.132 (n = 3)
+  CAP_1 avg_dwell_time - valence: r = -0.799, p = 0.411 (n = 3)
+  CAP_1 avg_dwell_time - arousal: r = -0.077, p = 0.951 (n = 3)
+  CAP_1 transitions_out - valence: r = -0.204, p = 0.869 (n = 3)
+  CAP_1 transitions_out - arousal: r = -0.869, p = 0.329 (n = 3)
+  CAP_1 transition_rate - valence: r = 0.722, p = 0.487 (n = 3)
+  CAP_1 transition_rate - arousal: r = 0.996, p = 0.053 (n = 3)
+  CAP_3 frequency_pct - valence: r = -0.731, p = 0.479 (n = 3)
+  CAP_3 frequency_pct - arousal: r = 0.029, p = 0.981 (n = 3)
+  CAP_3 avg_dwell_time - valence: r = 0.548, p = 0.631 (n = 3)
+  CAP_3 avg_dwell_time - arousal: r = -0.265, p = 0.829 (n = 3)
+  CAP_3 transitions_out - valence: r = 0.974, p = 0.145 (n = 3)
+  CAP_3 transitions_out - arousal: r = 0.813, p = 0.395 (n = 3)
+  CAP_3 transition_rate - valence: r = 0.964, p = 0.171 (n = 3)
+  CAP_3 transition_rate - arousal: r = 0.439, p = 0.711 (n = 3)
+  CAP_5 frequency_pct - valence: r = -0.952, p = 0.197 (n = 3)
+  CAP_5 frequency_pct - arousal: r = -0.858, p = 0.343 (n = 3)
+  CAP_5 avg_dwell_time - valence: r = 0.565, p = 0.618 (n = 3)
+  CAP_5 avg_dwell_time - arousal: r = -0.245, p = 0.842 (n = 3)
+  CAP_5 transitions_out - valence: r = -0.276, p = 0.822 (n = 3)
+  CAP_5 transitions_out - arousal: r = 0.538, p = 0.638 (n = 3)
+  CAP_5 transition_rate - valence: r = 0.237, p = 0.848 (n = 3)
+  CAP_5 transition_rate - arousal: r = 0.885, p = 0.308 (n = 3)
+
+==================================================
+
+2. LINEAR MIXED EFFECTS MODELS
+----------------------------------------
+No LME results available.
+
+==================================================
+
+3. TRANSITION ANALYSES
+----------------------------------------
+One-sample t-tests (vs 0):
+  Significant tests: 10 / 10
+  CAP_2 transitions_out: M = 7.500, t = 5.960, p = 0.027*
+  CAP_2 transition_rate: M = 1.075, t = 8.590, p = 0.013*
+  CAP_4 transitions_out: M = 7.500, t = 9.820, p = 0.010*
+  CAP_4 transition_rate: M = 0.825, t = 22.262, p = 0.002*
+  CAP_1 transitions_out: M = 8.667, t = 14.422, p = 0.005*
+  CAP_1 transition_rate: M = 0.874, t = 9.887, p = 0.010*
+  CAP_3 transitions_out: M = 7.833, t = 17.764, p = 0.003*
+  CAP_3 transition_rate: M = 1.067, t = 8.611, p = 0.013*
+  CAP_5 transitions_out: M = 4.333, t = 7.211, p = 0.019*
+  CAP_5 transition_rate: M = 0.616, t = 5.079, p = 0.037*
+
+Transition-emotion correlations:
+  CAP_2 transitions_out - valence: r = -0.077, p = 0.951
+  CAP_2 transitions_out - arousal: r = -0.799, p = 0.411
+  CAP_4 transitions_out - valence: r = -0.152, p = 0.903
+  CAP_4 transitions_out - arousal: r = -0.842, p = 0.363
+  CAP_1 transitions_out - valence: r = -0.204, p = 0.869
+  CAP_1 transitions_out - arousal: r = -0.869, p = 0.329
+  CAP_3 transitions_out - valence: r = 0.974, p = 0.145
+  CAP_3 transitions_out - arousal: r = 0.813, p = 0.395
+  CAP_5 transitions_out - valence: r = -0.276, p = 0.822
+  CAP_5 transitions_out - arousal: r = 0.538, p = 0.638
+
+==================================================
+* p < 0.05
+Analysis completed.
