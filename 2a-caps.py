@@ -56,6 +56,79 @@ def extract_timeseries(bold_file, atlas_img, atlas_labels):
     return df, timeseries, masker
 
 
+def plot_elbow_curve(timeseries, max_clusters=15, save_path=None):
+    """Plot elbow curve to determine optimal number of clusters."""
+    print("Computing elbow curve for optimal cluster selection...")
+
+    # Standardize the data (same as in clustering function)
+    scaler = StandardScaler()
+    timeseries_scaled = scaler.fit_transform(timeseries)
+
+    # Test different numbers of clusters
+    cluster_range = range(2, max_clusters + 1)
+    inertias = []
+
+    for k in cluster_range:
+        print(f"  Testing k={k}...")
+        kmeans = KMeans(n_clusters=k, random_state=42, n_init=100)
+        kmeans.fit(timeseries_scaled)
+        inertias.append(kmeans.inertia_)
+
+    # Create elbow plot
+    plt.figure(figsize=(10, 6))
+    plt.plot(cluster_range, inertias, "bo-", linewidth=2, markersize=8)
+    plt.xlabel("Number of Clusters (k)", fontsize=12)
+    plt.ylabel("Within-Cluster Sum of Squares (WCSS)", fontsize=12)
+    plt.title(
+        "Elbow Method for Optimal Number of Clusters", fontsize=14, fontweight="bold"
+    )
+    plt.grid(True, alpha=0.3)
+
+    # Add annotations
+    for i, (k, inertia) in enumerate(zip(cluster_range, inertias)):
+        plt.annotate(
+            f"k={k}",
+            (k, inertia),
+            textcoords="offset points",
+            xytext=(0, 10),
+            ha="center",
+            fontsize=9,
+        )
+
+    plt.tight_layout()
+
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        print(f"Elbow plot saved to: {save_path}")
+
+    plt.close()
+
+    # Calculate differences to help identify elbow
+    differences = []
+    for i in range(1, len(inertias)):
+        diff = inertias[i - 1] - inertias[i]
+        differences.append(diff)
+
+    # Find elbow using rate of change
+    second_differences = []
+    for i in range(1, len(differences)):
+        second_diff = differences[i - 1] - differences[i]
+        second_differences.append(second_diff)
+
+    # Suggest optimal k (where second difference is maximum)
+    if second_differences:
+        optimal_idx = second_differences.index(max(second_differences))
+        suggested_k = cluster_range[optimal_idx + 2]  # +2 because of indexing
+        print(f"Suggested optimal number of clusters: {suggested_k}")
+
+    # Print inertia values
+    print("\nCluster analysis results:")
+    for k, inertia in zip(cluster_range, inertias):
+        print(f"  k={k}: WCSS={inertia:.2f}")
+
+    return cluster_range, inertias
+
+
 def perform_kmeans_clustering(timeseries, n_clusters=5, random_state=42):
     """Perform k-means clustering on timeseries data."""
     print(f"Performing k-means clustering with {n_clusters} clusters...")
@@ -229,9 +302,20 @@ def main():
         print(f"Error extracting timeseries: {e}")
         return
 
-    # Perform k-means clustering
-    n_clusters = 5  # You can adjust this
+    # Generate elbow plot to determine optimal number of clusters
     try:
+        print("\nStep 1: Determining optimal number of clusters...")
+        cluster_range, inertias = plot_elbow_curve(
+            timeseries, max_clusters=15, save_path="elbow_plot.png"
+        )
+    except Exception as e:
+        print(f"Error generating elbow plot: {e}")
+        print("Continuing with default number of clusters...")
+
+    # Perform k-means clustering
+    n_clusters = 5  # You can adjust this based on elbow plot results
+    try:
+        print(f"\nStep 2: Performing clustering with k={n_clusters}...")
         cluster_labels, caps, kmeans, scaler = perform_kmeans_clustering(
             timeseries, n_clusters=n_clusters
         )
@@ -241,6 +325,7 @@ def main():
 
     # Plot results
     try:
+        print("\nStep 3: Generating visualization plots...")
         plot_caps(caps, atlas_labels, save_path="caps_patterns.png")
         plot_timeseries_with_clusters(
             df, cluster_labels, save_path="timeseries_clusters.png"
@@ -251,13 +336,20 @@ def main():
 
     # Save results
     try:
+        print("\nStep 4: Saving results...")
         save_results(df, cluster_labels, caps, atlas_labels)
     except Exception as e:
         print(f"Error saving results: {e}")
         return
 
     print("\nAnalysis completed successfully!")
-    print(f"Identified {n_clusters} distinct co-activation patterns (CAPs)")
+    print(f"Generated files:")
+    print("  - elbow_plot.png (for optimal cluster selection)")
+    print("  - caps_patterns.png (CAP visualization)")
+    print("  - timeseries_clusters.png (timeseries with clusters)")
+    print(f"  - caps_results/ directory with TSV files")
+    print(f"\nIdentified {n_clusters} distinct co-activation patterns (CAPs)")
+    print("Check the elbow plot to determine if this is optimal!")
 
     # Print basic statistics
     print("\nBasic Statistics:")
