@@ -235,6 +235,186 @@ def plot_timeseries_with_clusters(df, cluster_labels, save_path=None):
     plt.close()  # Close figure to free memory
 
 
+def calculate_cap_metrics(cluster_labels, run_name="run-01"):
+    """Calculate CAP metrics for a given run."""
+    print(f"Calculating CAP metrics for {run_name}...")
+
+    n_timepoints = len(cluster_labels)
+    unique_clusters = np.unique(cluster_labels)
+    n_clusters = len(unique_clusters)
+
+    # Initialize metrics dictionary
+    metrics = {
+        "run": run_name,
+        "total_timepoints": n_timepoints,
+        "n_clusters": n_clusters,
+    }
+
+    # Calculate metrics for each cluster/CAP
+    for cluster in unique_clusters:
+        cluster_name = f"CAP_{cluster + 1}"
+
+        # 1. Frequency of occurrence (percentage of time)
+        cluster_timepoints = np.sum(cluster_labels == cluster)
+        frequency = (cluster_timepoints / n_timepoints) * 100
+        metrics[f"{cluster_name}_frequency_pct"] = frequency
+
+        # 2. Dwell time (average consecutive TRs in this state)
+        dwell_times = []
+        current_dwell = 0
+        in_cluster = False
+
+        for i, label in enumerate(cluster_labels):
+            if label == cluster:
+                if not in_cluster:
+                    # Starting a new dwell period
+                    in_cluster = True
+                    current_dwell = 1
+                else:
+                    # Continuing current dwell period
+                    current_dwell += 1
+            else:
+                if in_cluster:
+                    # Ending current dwell period
+                    dwell_times.append(current_dwell)
+                    in_cluster = False
+                    current_dwell = 0
+
+        # Don't forget the last dwell period if it ends at the last timepoint
+        if in_cluster:
+            dwell_times.append(current_dwell)
+
+        # Calculate average dwell time
+        avg_dwell_time = np.mean(dwell_times) if dwell_times else 0
+        metrics[f"{cluster_name}_avg_dwell_time"] = avg_dwell_time
+        metrics[f"{cluster_name}_n_episodes"] = len(dwell_times)
+
+    # 3. Number of transitions (switches between brain states)
+    n_transitions = 0
+    for i in range(1, len(cluster_labels)):
+        if cluster_labels[i] != cluster_labels[i - 1]:
+            n_transitions += 1
+
+    metrics["total_transitions"] = n_transitions
+    metrics["transition_rate"] = n_transitions / n_timepoints if n_timepoints > 0 else 0
+
+    return metrics
+
+
+def analyze_cap_metrics_multiple_runs(timeseries_list, run_names, n_clusters=5):
+    """Analyze CAP metrics across multiple runs."""
+    print("Analyzing CAP metrics across multiple runs...")
+
+    all_metrics = []
+
+    for i, (timeseries, run_name) in enumerate(zip(timeseries_list, run_names)):
+        print(f"\nProcessing {run_name}...")
+
+        # Perform clustering for this run
+        cluster_labels, caps, kmeans, scaler = perform_kmeans_clustering(
+            timeseries, n_clusters=n_clusters, random_state=42
+        )
+
+        # Calculate metrics for this run
+        metrics = calculate_cap_metrics(cluster_labels, run_name)
+        all_metrics.append(metrics)
+
+    # Create DataFrame with all metrics
+    metrics_df = pd.DataFrame(all_metrics)
+
+    return metrics_df, all_metrics
+
+
+def plot_cap_metrics(metrics_df, save_path=None):
+    """Plot CAP metrics across runs."""
+    print("Plotting CAP metrics...")
+
+    # Determine number of CAPs from the metrics
+    cap_columns = [col for col in metrics_df.columns if "_frequency_pct" in col]
+    n_caps = len(cap_columns)
+
+    fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+
+    # 1. Frequency of occurrence
+    ax1 = axes[0, 0]
+    for i in range(n_caps):
+        cap_name = f"CAP_{i+1}"
+        freq_col = f"{cap_name}_frequency_pct"
+        if freq_col in metrics_df.columns:
+            ax1.bar(
+                [f"{run}\n{cap_name}" for run in metrics_df["run"]],
+                metrics_df[freq_col],
+                alpha=0.7,
+                label=cap_name,
+            )
+
+    ax1.set_title("Frequency of Occurrence (%)", fontweight="bold")
+    ax1.set_ylabel("Percentage of Time")
+    ax1.tick_params(axis="x", rotation=45)
+    ax1.legend()
+
+    # 2. Average dwell time
+    ax2 = axes[0, 1]
+    for i in range(n_caps):
+        cap_name = f"CAP_{i+1}"
+        dwell_col = f"{cap_name}_avg_dwell_time"
+        if dwell_col in metrics_df.columns:
+            ax2.bar(
+                [f"{run}\n{cap_name}" for run in metrics_df["run"]],
+                metrics_df[dwell_col],
+                alpha=0.7,
+                label=cap_name,
+            )
+
+    ax2.set_title("Average Dwell Time (TRs)", fontweight="bold")
+    ax2.set_ylabel("Time Points (TRs)")
+    ax2.tick_params(axis="x", rotation=45)
+    ax2.legend()
+
+    # 3 and 4 are broken and need to be fixed
+    # 3. Number of transitions
+    ax3 = axes[1, 0]
+    ax3.bar(metrics_df["run"], metrics_df["total_transitions"], alpha=0.7)
+    ax3.set_title("Total Number of Transitions", fontweight="bold")
+    ax3.set_ylabel("Number of Transitions")
+    ax3.tick_params(axis="x", rotation=45)
+
+    # 4. Transition rate
+    ax4 = axes[1, 1]
+    ax4.bar(metrics_df["run"], metrics_df["transition_rate"], alpha=0.7)
+    ax4.set_title("Transition Rate (transitions/TR)", fontweight="bold")
+    ax4.set_ylabel("Transitions per Time Point")
+    ax4.tick_params(axis="x", rotation=45)
+
+    plt.tight_layout()
+
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        print(f"CAP metrics plot saved to: {save_path}")
+
+    plt.close()
+
+
+def save_cap_metrics(metrics_df, output_dir="caps_results"):
+    """Save CAP metrics to file."""
+    print(f"Saving CAP metrics to {output_dir}/...")
+
+    # Create output directory
+    Path(output_dir).mkdir(exist_ok=True)
+
+    # Save metrics
+    metrics_df.to_csv(f"{output_dir}/cap_metrics.tsv", sep="\t", index=False)
+
+    # Create summary statistics
+    numeric_cols = metrics_df.select_dtypes(include=[np.number]).columns
+    summary_stats = metrics_df[numeric_cols].describe()
+    summary_stats.to_csv(f"{output_dir}/cap_metrics_summary.tsv", sep="\t")
+
+    print("CAP metrics saved:")
+    print(f"  - {output_dir}/cap_metrics.tsv")
+    print(f"  - {output_dir}/cap_metrics_summary.tsv")
+
+
 def save_results(df, cluster_labels, caps, atlas_labels, output_dir="caps_results"):
     """Save results to files."""
     print(f"Saving results to {output_dir}/...")
@@ -323,31 +503,85 @@ def main():
         print(f"Error in clustering: {e}")
         return
 
+    # Calculate CAP metrics
+    try:
+        print("\nStep 3: Calculating CAP metrics...")
+        run_name = (
+            bold_file.split("_")[0]
+            + "_"
+            + bold_file.split("_")[1]
+            + "_"
+            + bold_file.split("_")[2]
+            + "_"
+            + bold_file.split("_")[3]
+        )
+        cap_metrics = calculate_cap_metrics(cluster_labels, run_name)
+
+        # Create metrics DataFrame
+        metrics_df = pd.DataFrame([cap_metrics])
+
+        # Print metrics summary
+        print("\nCAP Metrics Summary:")
+        print(f"  Total timepoints: {cap_metrics['total_timepoints']}")
+        print(f"  Total transitions: {cap_metrics['total_transitions']}")
+        print(f"  Transition rate: {cap_metrics['transition_rate']:.3f} transitions/TR")
+
+        for i in range(n_clusters):
+            cap_name = f"CAP_{i+1}"
+            freq_key = f"{cap_name}_frequency_pct"
+            dwell_key = f"{cap_name}_avg_dwell_time"
+            episodes_key = f"{cap_name}_n_episodes"
+
+            print(f"  {cap_name}:")
+            print(f"    Frequency: {cap_metrics[freq_key]:.1f}%")
+            print(f"    Avg Dwell Time: {cap_metrics[dwell_key]:.2f} TRs")
+            print(f"    Episodes: {cap_metrics[episodes_key]}")
+
+    except Exception as e:
+        print(f"Error calculating CAP metrics: {e}")
+        metrics_df = None
+
     # Plot results
     try:
-        print("\nStep 3: Generating visualization plots...")
+        print("\nStep 4: Generating visualization plots...")
         plot_caps(caps, atlas_labels, save_path="caps_patterns.png")
         plot_timeseries_with_clusters(
             df, cluster_labels, save_path="timeseries_clusters.png"
         )
+
+        # Plot CAP metrics if available
+        if metrics_df is not None:
+            plot_cap_metrics(metrics_df, save_path="cap_metrics.png")
+
     except Exception as e:
         print(f"Error in plotting: {e}")
         print("Continuing without plots...")
 
     # Save results
     try:
-        print("\nStep 4: Saving results...")
+        print("\nStep 5: Saving results...")
         save_results(df, cluster_labels, caps, atlas_labels)
+
+        # Save CAP metrics if available
+        if metrics_df is not None:
+            save_cap_metrics(metrics_df)
+
     except Exception as e:
         print(f"Error saving results: {e}")
         return
 
     print("\nAnalysis completed successfully!")
-    print(f"Generated files:")
+    print("Generated files:")
     print("  - elbow_plot.png (for optimal cluster selection)")
     print("  - caps_patterns.png (CAP visualization)")
     print("  - timeseries_clusters.png (timeseries with clusters)")
-    print(f"  - caps_results/ directory with TSV files")
+    print("  - cap_metrics.png (CAP metrics visualization)")
+    print("  - caps_results/ directory with TSV files")
+    print("    * timeseries_with_clusters.tsv")
+    print("    * caps.tsv")
+    print("    * cluster_statistics.tsv")
+    print("    * cap_metrics.tsv")
+    print("    * cap_metrics_summary.tsv")
     print(f"\nIdentified {n_clusters} distinct co-activation patterns (CAPs)")
     print("Check the elbow plot to determine if this is optimal!")
 
