@@ -289,14 +289,38 @@ def calculate_cap_metrics(cluster_labels, run_name="run-01"):
         metrics[f"{cluster_name}_avg_dwell_time"] = avg_dwell_time
         metrics[f"{cluster_name}_n_episodes"] = len(dwell_times)
 
-    # 3. Number of transitions (switches between brain states)
-    n_transitions = 0
+    # 3. Number of transitions FROM each CAP to other brain states
+    for cluster in unique_clusters:
+        cluster_name = f"CAP_{cluster + 1}"
+
+        # Count transitions FROM this CAP to any other CAP
+        transitions_from_cap = 0
+
+        for i in range(len(cluster_labels) - 1):  # -1 because we look ahead
+            if cluster_labels[i] == cluster and cluster_labels[i + 1] != cluster:
+                transitions_from_cap += 1
+
+        metrics[f"{cluster_name}_transitions_out"] = transitions_from_cap
+
+        # Calculate transition rate for this CAP (transitions per episode)
+        n_episodes = metrics[f"{cluster_name}_n_episodes"]
+        if n_episodes > 0:
+            metrics[f"{cluster_name}_transition_rate"] = (
+                transitions_from_cap / n_episodes
+            )
+        else:
+            metrics[f"{cluster_name}_transition_rate"] = 0
+
+    # Overall transition metrics (for comparison)
+    total_transitions = 0
     for i in range(1, len(cluster_labels)):
         if cluster_labels[i] != cluster_labels[i - 1]:
-            n_transitions += 1
+            total_transitions += 1
 
-    metrics["total_transitions"] = n_transitions
-    metrics["transition_rate"] = n_transitions / n_timepoints if n_timepoints > 0 else 0
+    metrics["total_transitions"] = total_transitions
+    metrics["overall_transition_rate"] = (
+        total_transitions / n_timepoints if n_timepoints > 0 else 0
+    )
 
     return metrics
 
@@ -371,20 +395,41 @@ def plot_cap_metrics(metrics_df, save_path=None):
     ax2.tick_params(axis="x", rotation=45)
     ax2.legend()
 
-    # 3 and 4 are broken and need to be fixed
-    # 3. Number of transitions
+    # 3. Transitions out from each CAP
     ax3 = axes[1, 0]
-    ax3.bar(metrics_df["run"], metrics_df["total_transitions"], alpha=0.7)
-    ax3.set_title("Total Number of Transitions", fontweight="bold")
+    for i in range(n_caps):
+        cap_name = f"CAP_{i+1}"
+        trans_col = f"{cap_name}_transitions_out"
+        if trans_col in metrics_df.columns:
+            ax3.bar(
+                [f"{run}\n{cap_name}" for run in metrics_df["run"]],
+                metrics_df[trans_col],
+                alpha=0.7,
+                label=cap_name,
+            )
+
+    ax3.set_title("Transitions Out from Each CAP", fontweight="bold")
     ax3.set_ylabel("Number of Transitions")
     ax3.tick_params(axis="x", rotation=45)
+    ax3.legend()
 
-    # 4. Transition rate
+    # 4. CAP transition rates
     ax4 = axes[1, 1]
-    ax4.bar(metrics_df["run"], metrics_df["transition_rate"], alpha=0.7)
-    ax4.set_title("Transition Rate (transitions/TR)", fontweight="bold")
-    ax4.set_ylabel("Transitions per Time Point")
+    for i in range(n_caps):
+        cap_name = f"CAP_{i+1}"
+        rate_col = f"{cap_name}_transition_rate"
+        if rate_col in metrics_df.columns:
+            ax4.bar(
+                [f"{run}\n{cap_name}" for run in metrics_df["run"]],
+                metrics_df[rate_col],
+                alpha=0.7,
+                label=cap_name,
+            )
+
+    ax4.set_title("CAP Transition Rates (transitions/episode)", fontweight="bold")
+    ax4.set_ylabel("Transitions per Episode")
     ax4.tick_params(axis="x", rotation=45)
+    ax4.legend()
 
     plt.tight_layout()
 
@@ -523,19 +568,21 @@ def main():
         # Print metrics summary
         print("\nCAP Metrics Summary:")
         print(f"  Total timepoints: {cap_metrics['total_timepoints']}")
-        print(f"  Total transitions: {cap_metrics['total_transitions']}")
-        print(f"  Transition rate: {cap_metrics['transition_rate']:.3f} transitions/TR")
 
         for i in range(n_clusters):
             cap_name = f"CAP_{i+1}"
             freq_key = f"{cap_name}_frequency_pct"
             dwell_key = f"{cap_name}_avg_dwell_time"
             episodes_key = f"{cap_name}_n_episodes"
+            trans_out_key = f"{cap_name}_transitions_out"
+            trans_rate_key = f"{cap_name}_transition_rate"
 
             print(f"  {cap_name}:")
             print(f"    Frequency: {cap_metrics[freq_key]:.1f}%")
             print(f"    Avg Dwell Time: {cap_metrics[dwell_key]:.2f} TRs")
             print(f"    Episodes: {cap_metrics[episodes_key]}")
+            print(f"    Transitions out: {cap_metrics[trans_out_key]}")
+            print(f"    Transition rate: {cap_metrics[trans_rate_key]:.3f} /episode")
 
     except Exception as e:
         print(f"Error calculating CAP metrics: {e}")
