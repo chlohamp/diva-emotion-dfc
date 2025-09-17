@@ -133,13 +133,13 @@ def perform_kmeans_clustering(timeseries, n_clusters=5, random_state=42):
     """Perform k-means clustering on timeseries data."""
     print(f"Performing k-means clustering with {n_clusters} clusters...")
 
-    # Standardize the data
-    # Standardizes each network's timeseries individually (temporal standardization)
+    # Standardize the data (z-scoring/standardization)
+    # This is NOT Fisher r-to-z transformation
+    # For each network: z = (x - mean) / std across time
     scaler = StandardScaler()
     timeseries_scaled = scaler.fit_transform(timeseries)
 
-    # Perform k-means clustering
-    # Standardizes across all networks at each timepoint (spatial standardization)
+    # Perform k-means clustering on standardized data
 
     kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=100)
     cluster_labels = kmeans.fit_predict(timeseries_scaled)

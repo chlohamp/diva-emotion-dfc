@@ -50,15 +50,19 @@ def calculate_icc(rater_a1_data, rater_a2_data):
     icc2_valence = icc_valence[icc_valence["Type"] == "ICC2"]
     icc2_arousal = icc_arousal[icc_arousal["Type"] == "ICC2"]
 
-    # Get single rater ICC values - ICC2 single random raters
-    val_icc = icc2_valence[icc2_valence["Description"].str.contains("Single")][
-        "ICC"
-    ].iloc[0]
-    aro_icc = icc2_arousal[icc2_arousal["Description"].str.contains("Single")][
-        "ICC"
-    ].iloc[0]
+    # Get single rater ICC values and p-values - ICC2 single random raters
+    val_row = icc2_valence[icc2_valence["Description"].str.contains("Single")]
+    aro_row = icc2_arousal[icc2_arousal["Description"].str.contains("Single")]
 
-    return val_icc, aro_icc
+    val_icc = val_row["ICC"].iloc[0]
+    val_pval = val_row["pval"].iloc[0]
+    val_ci = val_row["CI95%"].iloc[0]
+
+    aro_icc = aro_row["ICC"].iloc[0]
+    aro_pval = aro_row["pval"].iloc[0]
+    aro_ci = aro_row["CI95%"].iloc[0]
+
+    return val_icc, val_pval, val_ci, aro_icc, aro_pval, aro_ci
 
 
 def detect_outlier_timepoints(rater_a1_data, rater_a2_data):
@@ -185,7 +189,9 @@ def main():
     # Calculate ICC(2,1) - Most important for absolute agreement
     print("\nCalculating ICC(2,1)...")
     try:
-        valence_icc, arousal_icc = calculate_icc(rater_a1_data, rater_a2_data)
+        icc_results = calculate_icc(rater_a1_data, rater_a2_data)
+        valence_icc, valence_pval, valence_ci = icc_results[0:3]
+        arousal_icc, arousal_pval, arousal_ci = icc_results[3:6]
     except Exception as e:
         print(f"Error calculating ICC: {e}")
         return
@@ -201,20 +207,52 @@ def main():
     print("\n" + "=" * 60)
     print("KEY METRICS FOR ABSOLUTE AGREEMENT")
     print("=" * 60)
+
+    # Display ICC results with p-values and significance
+    alpha = 0.05  # significance level
+
     print(f"ICC(2,1) for Valence: {valence_icc:.4f}")
+    print(f"  p-value: {valence_pval:.4f}")
+    if valence_pval < alpha:
+        print(f"  *** STATISTICALLY SIGNIFICANT (p < {alpha})")
+    else:
+        print(f"  Not statistically significant (p >= {alpha})")
+    print(f"  95% CI: {valence_ci}")
+
+    print()
     print(f"ICC(2,1) for Arousal: {arousal_icc:.4f}")
+    print(f"  p-value: {arousal_pval:.4f}")
+    if arousal_pval < alpha:
+        print(f"  *** STATISTICALLY SIGNIFICANT (p < {alpha})")
+    else:
+        print(f"  Not statistically significant (p >= {alpha})")
+    print(f"  95% CI: {arousal_ci}")
+
     print()
     print("Agreement within thresholds:")
     val_within_1 = agreement_metrics["valence_within_1pt"]
     aro_within_1 = agreement_metrics["arousal_within_1pt"]
     print(f"  Valence within 1.0 point: {val_within_1*100:.1f}%")
     print(f"  Arousal within 1.0 point: {aro_within_1*100:.1f}%")
-    print(f"  Mean difference - Valence: " f"{agreement_metrics['valence_MAD']:.2f}")
-    print(f"  Mean difference - Arousal: " f"{agreement_metrics['arousal_MAD']:.2f}")
+    val_mad = agreement_metrics["valence_MAD"]
+    aro_mad = agreement_metrics["arousal_MAD"]
+    print(f"  Mean difference - Valence: {val_mad:.2f}")
+    print(f"  Mean difference - Arousal: {aro_mad:.2f}")
     print()
+
+    # Enhanced recommendation considering p-values
     print("RECOMMENDATION:")
-    if valence_icc > 0.5 or arousal_icc > 0.5:
-        print("✓ Adequate reliability - proceed with brain analysis")
+    val_significant = valence_pval < alpha
+    aro_significant = arousal_pval < alpha
+
+    if (valence_icc > 0.5 and val_significant) or (
+        arousal_icc > 0.5 and aro_significant
+    ):
+        print(
+            "✓ Adequate reliability with statistical significance - proceed with brain analysis"
+        )
+    elif valence_icc > 0.5 or arousal_icc > 0.5:
+        print("~ Adequate ICC but not statistically significant - interpret cautiously")
     elif val_within_1 > 0.7 and aro_within_1 > 0.7:
         print("~ Marginal reliability - consider averaging raters")
     else:
@@ -233,6 +271,10 @@ def main():
         "run": ["run-1"],
         "valence_icc": [valence_icc],
         "arousal_icc": [arousal_icc],
+        "valence_pval": [valence_pval],
+        "arousal_pval": [arousal_pval],
+        "valence_significant": [valence_pval < alpha],
+        "arousal_significant": [arousal_pval < alpha],
         "valence_z": [valence_z],
         "arousal_z": [arousal_z],
     }
@@ -262,6 +304,12 @@ def main():
     print("0.50-0.75: Moderate reliability")
     print("0.75-0.90: Good reliability")
     print("> 0.90: Excellent reliability")
+    print()
+    print("Statistical Significance Guidelines:")
+    print("p < 0.05: Statistically significant reliability")
+    print("p >= 0.05: No significant evidence of reliability")
+    print("Note: ICC can be positive but not statistically significant")
+    print("      indicating insufficient evidence for true reliability")
 
     # Save results to file
     results_file = "interrater_reliability_results.tsv"
