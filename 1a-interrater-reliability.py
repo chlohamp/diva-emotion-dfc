@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from scipy import stats
 import pingouin as pg
 
 
@@ -9,23 +8,8 @@ def fisher_z_transform(r):
     return np.arctanh(r)
 
 
-def calculate_pearson_correlation(rater_a1_data, rater_a2_data):
-    """Calculate Pearson correlation for valence and arousal ratings."""
-
-    # Calculate correlations
-    valence_corr, valence_p = stats.pearsonr(
-        rater_a1_data["valence"], rater_a2_data["valence"]
-    )
-
-    arousal_corr, arousal_p = stats.pearsonr(
-        rater_a1_data["arousal"], rater_a2_data["arousal"]
-    )
-
-    return valence_corr, arousal_corr, valence_p, arousal_p
-
-
 def calculate_icc(rater_a1_data, rater_a2_data):
-    """Calculate ICC(2,1) using pingouin for valence and arousal ratings."""
+    """Calculate ICC(2,1) for valence and arousal ratings."""
 
     n_trials = len(rater_a1_data)
 
@@ -77,6 +61,103 @@ def calculate_icc(rater_a1_data, rater_a2_data):
     return val_icc, aro_icc
 
 
+def detect_outlier_timepoints(rater_a1_data, rater_a2_data):
+    """
+    Detect specific timepoints where raters strongly disagree.
+    Returns detailed information about outlier timepoints.
+    """
+    n_trials = len(rater_a1_data)
+    outlier_details = {
+        "timepoints": [],
+        "valence_disagreements": [],
+        "arousal_disagreements": [],
+        "summary": {},
+    }
+
+    # Calculate difference scores for each timepoint
+    val_diff = np.abs(rater_a1_data["valence"] - rater_a2_data["valence"])
+    aro_diff = np.abs(rater_a1_data["arousal"] - rater_a2_data["arousal"])
+
+    # Define disagreement thresholds
+    large_disagreement_threshold = 2.0  # 2+ scale points difference
+    moderate_disagreement_threshold = 1.5  # 1.5+ scale points difference
+
+    # Check each timepoint
+    for i in range(n_trials):
+        val_disagreement = val_diff.iloc[i]
+        aro_disagreement = aro_diff.iloc[i]
+
+        # Check if this timepoint has large disagreements
+        is_val_outlier = val_disagreement > large_disagreement_threshold
+        is_aro_outlier = aro_disagreement > large_disagreement_threshold
+
+        if is_val_outlier or is_aro_outlier:
+            timepoint_info = {
+                "timepoint_index": i,
+                "onset_time": rater_a1_data.iloc[i].get("onset", i),
+                "valence_rater1": rater_a1_data["valence"].iloc[i],
+                "valence_rater2": rater_a2_data["valence"].iloc[i],
+                "valence_difference": val_disagreement,
+                "arousal_rater1": rater_a1_data["arousal"].iloc[i],
+                "arousal_rater2": rater_a2_data["arousal"].iloc[i],
+                "arousal_difference": aro_disagreement,
+                "valence_outlier": is_val_outlier,
+                "arousal_outlier": is_aro_outlier,
+            }
+            outlier_details["timepoints"].append(timepoint_info)
+
+    # Calculate summary statistics
+    large_val_disagreements = (val_diff > large_disagreement_threshold).sum()
+    large_aro_disagreements = (aro_diff > large_disagreement_threshold).sum()
+    moderate_val_disagreements = (val_diff > moderate_disagreement_threshold).sum()
+    moderate_aro_disagreements = (aro_diff > moderate_disagreement_threshold).sum()
+
+    outlier_details["summary"] = {
+        "total_timepoints": n_trials,
+        "large_valence_disagreements": large_val_disagreements,
+        "large_arousal_disagreements": large_aro_disagreements,
+        "moderate_valence_disagreements": moderate_val_disagreements,
+        "moderate_arousal_disagreements": moderate_aro_disagreements,
+        "pct_large_valence": (large_val_disagreements / n_trials) * 100,
+        "pct_large_arousal": (large_aro_disagreements / n_trials) * 100,
+        "mean_valence_difference": val_diff.mean(),
+        "mean_arousal_difference": aro_diff.mean(),
+        "max_valence_difference": val_diff.max(),
+        "max_arousal_difference": aro_diff.max(),
+    }
+
+    return outlier_details
+
+
+def calculate_agreement_metrics(rater_a1_data, rater_a2_data):
+    """Calculate additional agreement metrics beyond ICC."""
+
+    metrics = {}
+
+    for emotion in ["valence", "arousal"]:
+        r1_ratings = rater_a1_data[emotion]
+        r2_ratings = rater_a2_data[emotion]
+
+        # Mean absolute difference
+        mad = np.mean(np.abs(r1_ratings - r2_ratings))
+
+        # Root mean square difference
+        rmsd = np.sqrt(np.mean((r1_ratings - r2_ratings) ** 2))
+
+        # Proportion of ratings within 1 scale point
+        within_1_point = np.mean(np.abs(r1_ratings - r2_ratings) <= 1)
+
+        # Proportion of ratings within 0.5 scale points
+        within_half_point = np.mean(np.abs(r1_ratings - r2_ratings) <= 0.5)
+
+        metrics[f"{emotion}_MAD"] = mad
+        metrics[f"{emotion}_RMSD"] = rmsd
+        metrics[f"{emotion}_within_1pt"] = within_1_point
+        metrics[f"{emotion}_within_0.5pt"] = within_half_point
+
+    return metrics
+
+
 def main():
     print("Inter-rater Reliability Analysis")
     print("=" * 40)
@@ -101,31 +182,43 @@ def main():
         print("Error: Rater files have different numbers of trials!")
         return
 
-    # Calculate correlations first
-    print("\nCalculating Pearson correlations...")
-    try:
-        val_corr, aro_corr, val_p, aro_p = calculate_pearson_correlation(
-            rater_a1_data, rater_a2_data
-        )
-
-        print(f"Valence correlation: r = {val_corr:.4f}, p = {val_p:.4f}")
-        print(f"Arousal correlation: r = {aro_corr:.4f}, p = {aro_p:.4f}")
-
-    except Exception as e:
-        print(f"Error calculating correlations: {e}")
-        return
-
-    # Calculate ICC(2,1) using pingouin
-    print("\nCalculating ICC(2,1) using pingouin...")
+    # Calculate ICC(2,1) - Most important for absolute agreement
+    print("\nCalculating ICC(2,1)...")
     try:
         valence_icc, arousal_icc = calculate_icc(rater_a1_data, rater_a2_data)
-
-        print(f"ICC(2,1) for Valence: {valence_icc:.4f}")
-        print(f"ICC(2,1) for Arousal: {arousal_icc:.4f}")
-
     except Exception as e:
         print(f"Error calculating ICC: {e}")
         return
+
+    # Calculate agreement metrics
+    print("\nCalculating agreement metrics...")
+    try:
+        agreement_metrics = calculate_agreement_metrics(rater_a1_data, rater_a2_data)
+    except Exception as e:
+        print(f"Error calculating agreement metrics: {e}")
+        return
+
+    print("\n" + "=" * 60)
+    print("KEY METRICS FOR ABSOLUTE AGREEMENT")
+    print("=" * 60)
+    print(f"ICC(2,1) for Valence: {valence_icc:.4f}")
+    print(f"ICC(2,1) for Arousal: {arousal_icc:.4f}")
+    print()
+    print("Agreement within thresholds:")
+    val_within_1 = agreement_metrics["valence_within_1pt"]
+    aro_within_1 = agreement_metrics["arousal_within_1pt"]
+    print(f"  Valence within 1.0 point: {val_within_1*100:.1f}%")
+    print(f"  Arousal within 1.0 point: {aro_within_1*100:.1f}%")
+    print(f"  Mean difference - Valence: " f"{agreement_metrics['valence_MAD']:.2f}")
+    print(f"  Mean difference - Arousal: " f"{agreement_metrics['arousal_MAD']:.2f}")
+    print()
+    print("RECOMMENDATION:")
+    if valence_icc > 0.5 or arousal_icc > 0.5:
+        print("✓ Adequate reliability - proceed with brain analysis")
+    elif val_within_1 > 0.7 and aro_within_1 > 0.7:
+        print("~ Marginal reliability - consider averaging raters")
+    else:
+        print("✗ Poor reliability - improve rating protocol first")
 
     # Apply Fisher z-transformation
     print("\nApplying Fisher z-transformation...")
@@ -142,8 +235,6 @@ def main():
         "arousal_icc": [arousal_icc],
         "valence_z": [valence_z],
         "arousal_z": [arousal_z],
-        "valence_corr": [val_corr],
-        "arousal_corr": [aro_corr],
     }
 
     results_df = pd.DataFrame(results)
@@ -176,6 +267,58 @@ def main():
     results_file = "interrater_reliability_results.tsv"
     results_df.to_csv(results_file, sep="\t", index=False)
     print(f"\nResults saved to: {results_file}")
+
+    # Outlier timepoint detection
+    print("\nDetecting outlier timepoints...")
+    try:
+        outlier_details = detect_outlier_timepoints(rater_a1_data, rater_a2_data)
+
+        # Print summary
+        summary = outlier_details["summary"]
+        print(f"Total timepoints analyzed: {summary['total_timepoints']}")
+        print(
+            f"Large valence disagreements (>2 points): "
+            f"{summary['large_valence_disagreements']} "
+            f"({summary['pct_large_valence']:.1f}%)"
+        )
+        print(
+            f"Large arousal disagreements (>2 points): "
+            f"{summary['large_arousal_disagreements']} "
+            f"({summary['pct_large_arousal']:.1f}%)"
+        )
+        print(f"Mean valence difference: {summary['mean_valence_difference']:.2f}")
+        print(f"Mean arousal difference: {summary['mean_arousal_difference']:.2f}")
+        print(f"Max valence difference: {summary['max_valence_difference']:.2f}")
+        print(f"Max arousal difference: {summary['max_arousal_difference']:.2f}")
+
+        # Print details of outlier timepoints
+        if outlier_details["timepoints"]:
+            print(f"\nOutlier timepoints (n={len(outlier_details['timepoints'])}):")
+            print("-" * 80)
+            for tp in outlier_details["timepoints"]:
+                print(
+                    f"Timepoint {tp['timepoint_index']} "
+                    f"(onset: {tp['onset_time']}):"
+                )
+                if tp["valence_outlier"]:
+                    print(
+                        f"  Valence: Rater1={tp['valence_rater1']:.1f}, "
+                        f"Rater2={tp['valence_rater2']:.1f}, "
+                        f"Diff={tp['valence_difference']:.1f}"
+                    )
+                if tp["arousal_outlier"]:
+                    print(
+                        f"  Arousal: Rater1={tp['arousal_rater1']:.1f}, "
+                        f"Rater2={tp['arousal_rater2']:.1f}, "
+                        f"Diff={tp['arousal_difference']:.1f}"
+                    )
+        else:
+            print(
+                "\nNo major outlier timepoints detected (all disagreements <2 points)"
+            )
+
+    except Exception as e:
+        print(f"Error in outlier detection: {e}")
 
 
 if __name__ == "__main__":
