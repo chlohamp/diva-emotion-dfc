@@ -134,8 +134,9 @@ def perform_kmeans_clustering(timeseries, n_clusters=5, random_state=42):
     print(f"Performing k-means clustering with {n_clusters} clusters...")
 
     # Standardize the data (z-scoring/standardization)
-    # This is NOT Fisher r-to-z transformation
-    # For each network: z = (x - mean) / std across time
+    # For individual subject analysis: standardizes each network's
+    # timeseries across all timepoints (temporal standardization)
+    # Matrix shape: (all_timepoints_from_all_runs, 7_networks)
     scaler = StandardScaler()
     timeseries_scaled = scaler.fit_transform(timeseries)
 
