@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 from scipy import stats
-from scipy.stats import pearsonr, ttest_1samp
+import statsmodels.api as sm
+from scipy.stats import pearsonr, ttest_1samp, f_oneway
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
@@ -11,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 # For mixed-effects models
 try:
-    import statsmodels.api as sm
+
     from statsmodels.formula.api import mixedlm
 
     HAS_STATSMODELS = True
@@ -40,6 +41,768 @@ def load_character_data(
     )
 
     return character_data, participants
+
+
+def load_character_events_data(
+    events_file_a1="ses-01_task-strangerthings_acq-A1_run-1_events.tsv",
+    events_file_a2="ses-01_task-strangerthings_acq-A2_run-1_events.tsv",
+):
+    """Load events data with character appearances."""
+    print("Loading character events data...")
+
+    # Load the events data
+    events_a1 = pd.read_csv(events_file_a1, sep="\t")
+    events_a2 = pd.read_csv(events_file_a2, sep="\t")
+
+    print(f"Loaded {len(events_a1)} events from A1, {len(events_a2)} events from A2")
+
+    if "characters" in events_a1.columns:
+        print("Found 'characters' column in events data")
+        print(f"Characters found: {events_a1['characters'].unique()}")
+    else:
+        print("WARNING: 'characters' column not found in events data")
+        return pd.DataFrame()
+
+    # For this analysis, we'll use the A1 events (or average between raters)
+    # In practice, you might want to average emotion ratings between raters
+    return events_a1
+
+
+def calculate_character_specific_cap_metrics(
+    cluster_labels, events_data, tr_duration=1.5, participant_id=None
+):
+    """
+    Calculate CAP metrics for specific character appearance conditions.
+    Focus on dwell time calculations when characters are on screen.
+
+    Parameters:
+    -----------
+    cluster_labels : array
+        CAP assignments for each TR
+    events_data : DataFrame
+        Contains onset, duration, characters for each condition
+    tr_duration : float
+        Duration of each TR in seconds (default: 1.5s)
+    participant_id : str
+        Participant identifier
+
+    Returns:
+    --------
+    character_condition_metrics : DataFrame
+        CAP metrics calculated for each character appearance condition
+    """
+    print(
+        f"Calculating character-specific CAP dwell time metrics for {participant_id}..."
+    )
+
+    if len(events_data) == 0:
+        return pd.DataFrame()
+
+    condition_results = []
+    unique_clusters = np.unique(cluster_labels)
+
+    # Get unique characters
+    all_characters = set()
+    for characters_str in events_data["characters"].dropna():
+        # Handle cases where multiple characters are listed (e.g., "Mike Wheeler; Eleven")
+        chars = [char.strip() for char in str(characters_str).split(";")]
+        all_characters.update(chars)
+
+    print(f"Found characters: {list(all_characters)}")
+
+    # Process each event/condition
+    for idx, condition in events_data.iterrows():
+        onset = condition["onset"]
+        duration = condition["duration"]
+        characters = condition["characters"]
+
+        # Convert onset/duration from seconds to TR indices
+        start_tr = int(onset / tr_duration)
+        end_tr = int((onset + duration) / tr_duration)
+
+        # Ensure indices are within bounds
+        start_tr = max(0, start_tr)
+        end_tr = min(len(cluster_labels), end_tr)
+
+        if start_tr >= end_tr:
+            continue
+
+        # Extract cluster labels for this condition period
+        condition_labels = cluster_labels[start_tr:end_tr]
+
+        if len(condition_labels) == 0:
+            continue
+
+        # Parse characters on screen
+        if pd.isna(characters):
+            characters_list = []
+        else:
+            characters_list = [char.strip() for char in str(characters).split(";")]
+
+        # Initialize condition metrics
+        condition_metrics = {
+            "participant_id": participant_id,
+            "condition_idx": idx,
+            "onset": onset,
+            "duration": duration,
+            "start_tr": start_tr,
+            "end_tr": end_tr,
+            "n_trs": len(condition_labels),
+            "characters": characters,
+            "n_characters": len(characters_list),
+            # Add individual character presence indicators
+            "mike_wheeler_present": int("Mike Wheeler" in characters_list),
+            "eleven_present": int("Eleven" in characters_list),
+            "nancy_present": int("Nancy" in characters_list),
+        }
+
+        # Calculate comprehensive dwell time metrics for each CAP
+        for cluster in unique_clusters:
+            cap_name = f"CAP_{cluster + 1}"
+
+            # 1. Frequency of occurrence (percentage of condition time)
+            cluster_trs = np.sum(condition_labels == cluster)
+            frequency_pct = (cluster_trs / len(condition_labels)) * 100
+            condition_metrics[f"{cap_name}_frequency_pct"] = frequency_pct
+
+            # 2. DWELL TIME CALCULATION - Key focus for character analysis
+            dwell_times = []
+            current_dwell = 0
+            in_cluster = False
+
+            for i in range(len(condition_labels)):
+                if condition_labels[i] == cluster:
+                    if not in_cluster:
+                        # Starting a new visit to this cluster
+                        in_cluster = True
+                        current_dwell = 1
+                    else:
+                        # Continuing in this cluster
+                        current_dwell += 1
+                else:
+                    if in_cluster:
+                        # Just left this cluster, record the dwell time
+                        dwell_times.append(current_dwell)
+                        in_cluster = False
+                        current_dwell = 0
+
+            # Handle case where condition ends while in the cluster
+            if in_cluster:
+                dwell_times.append(current_dwell)
+
+            # Calculate comprehensive dwell time statistics
+            if dwell_times:
+                avg_dwell_time = np.mean(dwell_times)
+                max_dwell_time = np.max(dwell_times)
+                min_dwell_time = np.min(dwell_times)
+                std_dwell_time = np.std(dwell_times) if len(dwell_times) > 1 else 0
+                n_visits = len(dwell_times)
+                total_dwell_time = np.sum(dwell_times)
+            else:
+                avg_dwell_time = 0
+                max_dwell_time = 0
+                min_dwell_time = 0
+                std_dwell_time = 0
+                n_visits = 0
+                total_dwell_time = 0
+
+            # Store comprehensive dwell time metrics
+            condition_metrics[f"{cap_name}_avg_dwell_time"] = avg_dwell_time
+            condition_metrics[f"{cap_name}_max_dwell_time"] = max_dwell_time
+            condition_metrics[f"{cap_name}_min_dwell_time"] = min_dwell_time
+            condition_metrics[f"{cap_name}_std_dwell_time"] = std_dwell_time
+            condition_metrics[f"{cap_name}_total_dwell_time"] = total_dwell_time
+            condition_metrics[f"{cap_name}_n_visits"] = n_visits
+
+            # Dwell time in seconds (for interpretability)
+            condition_metrics[f"{cap_name}_avg_dwell_time_sec"] = (
+                avg_dwell_time * tr_duration
+            )
+            condition_metrics[f"{cap_name}_total_dwell_time_sec"] = (
+                total_dwell_time * tr_duration
+            )
+
+            # 3. Number of transitions FROM this CAP during the condition
+            transitions_out = 0
+            for i in range(len(condition_labels) - 1):
+                if (
+                    condition_labels[i] == cluster
+                    and condition_labels[i + 1] != cluster
+                ):
+                    transitions_out += 1
+
+            condition_metrics[f"{cap_name}_transitions_out"] = transitions_out
+
+        condition_results.append(condition_metrics)
+
+    condition_df = pd.DataFrame(condition_results)
+
+    if len(condition_df) > 0:
+        print(f"  Calculated metrics for {len(condition_df)} character conditions")
+        print(
+            f"  Conditions range from {condition_df['duration'].min():.1f}s to {condition_df['duration'].max():.1f}s"
+        )
+        print(f"  Average TRs per condition: {condition_df['n_trs'].mean():.1f}")
+
+        # Report character presence statistics
+        character_counts = {
+            "Mike Wheeler": condition_df["mike_wheeler_present"].sum(),
+            "Eleven": condition_df["eleven_present"].sum(),
+            "Nancy": condition_df["nancy_present"].sum(),
+        }
+
+        for char, count in character_counts.items():
+            percentage = (count / len(condition_df)) * 100
+            print(
+                f"  {char}: present in {count}/{len(condition_df)} conditions ({percentage:.1f}%)"
+            )
+
+    return condition_df
+
+
+def load_caps_and_calculate_character_metrics(
+    events_data,
+    reliable_participants,
+    caps_results_dir="caps_results_sub_pretend_ses_01",
+    tr_duration=1.5,
+):
+    """
+    Load CAP clustering results and calculate character-specific metrics.
+    """
+    print("Loading CAPs results and calculating character-specific metrics...")
+
+    # Try to load the actual clustering results
+    try:
+        # Load cluster assignments
+        timeseries_file = f"{caps_results_dir}/timeseries_with_clusters.tsv"
+        cluster_data = pd.read_csv(timeseries_file, sep="\t")
+        cluster_labels = cluster_data["cluster"].values
+        print(
+            f"Loaded {len(cluster_labels)} cluster assignments from {timeseries_file}"
+        )
+
+    except FileNotFoundError:
+        print(f"Warning: Could not find {timeseries_file}")
+        print("Generating simulated cluster labels for demonstration...")
+
+        # Generate simulated cluster labels (5 clusters, random assignment)
+        n_timepoints = 300  # Approximate length for demo
+        cluster_labels = np.random.randint(0, 5, n_timepoints)
+
+    # Calculate character-specific metrics for each participant
+    all_character_metrics = []
+
+    for participant_id in reliable_participants:
+        print(f"\nProcessing {participant_id}...")
+
+        # Get events data for this participant (expand events to all participants)
+        participant_events = events_data.copy()
+
+        if len(participant_events) == 0:
+            print(f"  No events data for {participant_id}")
+            continue
+
+        # Calculate character-specific CAP metrics
+        character_metrics = calculate_character_specific_cap_metrics(
+            cluster_labels=cluster_labels,
+            events_data=participant_events,
+            tr_duration=tr_duration,
+            participant_id=participant_id,
+        )
+
+        if len(character_metrics) > 0:
+            all_character_metrics.append(character_metrics)
+
+    # Combine all participants' character metrics
+    if all_character_metrics:
+        combined_metrics = pd.concat(all_character_metrics, ignore_index=True)
+        print(
+            f"\nCombined metrics: {len(combined_metrics)} conditions across {len(reliable_participants)} participants"
+        )
+
+        return combined_metrics
+    else:
+        print("No character metrics calculated")
+        return pd.DataFrame()
+
+
+def analyze_dwell_time_by_character_presence(character_metrics_df):
+    """
+    Analyze dwell time patterns by character presence with ANOVA tests.
+
+    This function:
+    1. Compares dwell time when specific characters are present vs absent
+    2. Runs ANOVA tests for each CAP's dwell time metrics
+    3. Tests main effects of individual characters
+    """
+    print("\n=== DWELL TIME BY CHARACTER PRESENCE WITH ANOVA ===")
+
+    if len(character_metrics_df) == 0:
+        print("No character metrics data available")
+        return []
+
+    # Get dwell time columns
+    dwell_cols = [
+        col
+        for col in character_metrics_df.columns
+        if "avg_dwell_time" in col and "sec" not in col
+    ]
+
+    if not dwell_cols:
+        print("No dwell time metrics found")
+        return []
+
+    print(f"Analyzing {len(dwell_cols)} dwell time metrics by character presence...")
+
+    # Character presence indicators
+    character_indicators = ["mike_wheeler_present", "eleven_present", "nancy_present"]
+    character_names = ["Mike Wheeler", "Eleven", "Nancy"]
+
+    anova_results = []
+
+    # Test each dwell time metric
+    for col in dwell_cols:
+        print(f"\n--- {col} ---")
+
+        if col not in character_metrics_df.columns:
+            continue
+
+        valid_data = character_metrics_df[[col] + character_indicators].dropna()
+
+        if len(valid_data) < 6:  # Need at least 6 observations
+            print(f"  Insufficient data (n={len(valid_data)})")
+            continue
+
+        # Test each character individually
+        for char_indicator, char_name in zip(character_indicators, character_names):
+
+            # Group data by character presence
+            present_data = valid_data[valid_data[char_indicator] == 1][col].values
+            absent_data = valid_data[valid_data[char_indicator] == 0][col].values
+
+            if len(present_data) >= 2 and len(absent_data) >= 2:
+                try:
+                    # Run ANOVA (t-test for 2 groups)
+                    f_stat, p_value = f_oneway(present_data, absent_data)
+
+                    # Determine significance
+                    significant = p_value < 0.05
+                    sig_marker = (
+                        "***"
+                        if p_value < 0.001
+                        else "**" if p_value < 0.01 else "*" if p_value < 0.05 else ""
+                    )
+
+                    print(f"  {char_name}:")
+                    print(
+                        f"    F(1, {len(valid_data)-2}) = {f_stat:.3f}, p = {p_value:.3f}{sig_marker}"
+                    )
+
+                    if significant:
+                        print(
+                            f"    *** SIGNIFICANT: Dwell time differs when {char_name} is on screen ***"
+                        )
+
+                    # Show group means
+                    present_mean = np.mean(present_data)
+                    absent_mean = np.mean(absent_data)
+                    print(
+                        f"    {char_name} present: M = {present_mean:.2f} (n = {len(present_data)})"
+                    )
+                    print(
+                        f"    {char_name} absent: M = {absent_mean:.2f} (n = {len(absent_data)})"
+                    )
+
+                    # Calculate effect size (Cohen's d)
+                    pooled_std = np.sqrt(
+                        (
+                            (len(present_data) - 1) * np.var(present_data, ddof=1)
+                            + (len(absent_data) - 1) * np.var(absent_data, ddof=1)
+                        )
+                        / (len(present_data) + len(absent_data) - 2)
+                    )
+                    cohens_d = (
+                        (present_mean - absent_mean) / pooled_std
+                        if pooled_std > 0
+                        else 0
+                    )
+
+                    effect_size_label = (
+                        "large"
+                        if abs(cohens_d) > 0.8
+                        else "medium" if abs(cohens_d) > 0.5 else "small"
+                    )
+                    print(f"    Effect size: d = {cohens_d:.3f} ({effect_size_label})")
+
+                    # Store results
+                    anova_results.append(
+                        {
+                            "cap_metric": col,
+                            "character": char_name,
+                            "f_statistic": f_stat,
+                            "p_value": p_value,
+                            "significant": significant,
+                            "present_mean": present_mean,
+                            "absent_mean": absent_mean,
+                            "present_n": len(present_data),
+                            "absent_n": len(absent_data),
+                            "cohens_d": cohens_d,
+                            "effect_size": effect_size_label,
+                            "total_n": len(valid_data),
+                        }
+                    )
+
+                except Exception as e:
+                    print(f"    ANOVA failed for {char_name}: {e}")
+                    continue
+            else:
+                print(f"  {char_name}: Insufficient data in one or both groups")
+                print(
+                    f"    Present: n={len(present_data)}, Absent: n={len(absent_data)}"
+                )
+
+    # Summary of ANOVA results
+    if anova_results:
+        print(f"\n--- CHARACTER PRESENCE ANOVA SUMMARY ---")
+        significant_results = [r for r in anova_results if r["significant"]]
+
+        print(f"Total ANOVA tests: {len(anova_results)}")
+        print(f"Significant results: {len(significant_results)}")
+
+        if significant_results:
+            print(f"\nSignificant dwell time differences by character presence:")
+            for result in significant_results:
+                direction = (
+                    "higher"
+                    if result["present_mean"] > result["absent_mean"]
+                    else "lower"
+                )
+                print(
+                    f"  {result['cap_metric']} - {result['character']}: {direction} when present"
+                )
+                print(
+                    f"    F = {result['f_statistic']:.3f}, p = {result['p_value']:.3f}, d = {result['cohens_d']:.3f}"
+                )
+        else:
+            print(
+                f"\nNo significant dwell time differences found by character presence"
+            )
+
+        # Character-specific summary
+        print(f"\n--- CHARACTER-SPECIFIC EFFECTS ---")
+        for char_name in character_names:
+            char_results = [r for r in anova_results if r["character"] == char_name]
+            char_significant = [r for r in char_results if r["significant"]]
+
+            if char_results:
+                print(
+                    f"{char_name}: {len(char_significant)}/{len(char_results)} significant effects"
+                )
+                if char_significant:
+                    for result in char_significant:
+                        cap_name = result["cap_metric"].replace("_avg_dwell_time", "")
+                        direction = (
+                            "↑"
+                            if result["present_mean"] > result["absent_mean"]
+                            else "↓"
+                        )
+                        print(
+                            f"  {cap_name}: {direction} dwell time when present (p = {result['p_value']:.3f})"
+                        )
+
+    else:
+        print("No ANOVA tests could be performed")
+
+    return anova_results
+
+
+def correlate_character_metrics_with_cap_dwell_times(character_metrics_df):
+    """
+    Calculate correlations between character presence and CAP dwell time metrics.
+    """
+    print("Calculating correlations between character presence and CAP dwell times...")
+
+    if len(character_metrics_df) == 0:
+        return pd.DataFrame()
+
+    correlation_results = []
+
+    # Get dwell time columns
+    dwell_cols = [
+        col
+        for col in character_metrics_df.columns
+        if "avg_dwell_time" in col and "sec" not in col
+    ]
+
+    # Character presence indicators
+    character_indicators = ["mike_wheeler_present", "eleven_present", "nancy_present"]
+    character_names = ["Mike Wheeler", "Eleven", "Nancy"]
+
+    # Calculate correlations
+    for dwell_col in dwell_cols:
+        cap_name = dwell_col.replace("_avg_dwell_time", "")
+
+        for char_indicator, char_name in zip(character_indicators, character_names):
+
+            # Get valid data
+            valid_data = character_metrics_df[[dwell_col, char_indicator]].dropna()
+
+            if len(valid_data) >= 3:  # Need at least 3 data points
+                try:
+                    r, p_value = pearsonr(
+                        valid_data[dwell_col], valid_data[char_indicator]
+                    )
+
+                    # Determine effect size
+                    if abs(r) < 0.1:
+                        effect_size = "negligible"
+                    elif abs(r) < 0.3:
+                        effect_size = "small"
+                    elif abs(r) < 0.5:
+                        effect_size = "medium"
+                    else:
+                        effect_size = "large"
+
+                    correlation_results.append(
+                        {
+                            "cap": cap_name,
+                            "character": char_name,
+                            "metric": "avg_dwell_time",
+                            "r": r,
+                            "p_value": p_value,
+                            "significant": p_value < 0.05,
+                            "effect_size": effect_size,
+                            "n": len(valid_data),
+                        }
+                    )
+
+                except Exception as e:
+                    print(f"Correlation failed for {cap_name} - {char_name}: {e}")
+
+    results_df = pd.DataFrame(correlation_results)
+
+    if len(results_df) > 0:
+        n_significant = (results_df["p_value"] < 0.05).sum()
+        print(f"Calculated {len(results_df)} correlations, {n_significant} significant")
+
+        # Show significant correlations
+        if n_significant > 0:
+            print("Significant character-dwell time correlations:")
+            sig_results = results_df[results_df["significant"]].sort_values("p_value")
+            for _, row in sig_results.iterrows():
+                direction = "positive" if row["r"] > 0 else "negative"
+                print(
+                    f"  {row['cap']} - {row['character']}: r = {row['r']:.3f}, p = {row['p_value']:.3f} ({direction})"
+                )
+
+    return results_df
+
+
+def generate_character_dwell_time_report(
+    character_metrics_df, correlation_results, anova_results
+):
+    """Generate a comprehensive report on character dwell time findings."""
+    print("\nGenerating character dwell time analysis report...")
+
+    with open("character_dwell_time_analysis_report.txt", "w") as f:
+        f.write("CHARACTER DWELL TIME ANALYSIS REPORT\n")
+        f.write("=" * 50 + "\n\n")
+
+        f.write("ANALYSIS OVERVIEW\n")
+        f.write("-" * 17 + "\n")
+        f.write(
+            "This analysis examined how CAP dwell time varies with character presence.\n"
+        )
+        f.write(
+            "Dwell time = average number of consecutive TRs spent in each CAP state.\n"
+        )
+        f.write("Conditions defined by character appearances on screen.\n")
+        f.write("Characters analyzed: Mike Wheeler, Eleven, Nancy\n\n")
+
+        if len(character_metrics_df) > 0:
+            f.write(f"Total conditions analyzed: {len(character_metrics_df)}\n")
+            f.write(
+                f"Participants: {character_metrics_df['participant_id'].nunique()}\n"
+            )
+            f.write(
+                f"Condition duration range: {character_metrics_df['duration'].min():.1f}s - {character_metrics_df['duration'].max():.1f}s\n\n"
+            )
+
+            # Character presence statistics
+            f.write("CHARACTER PRESENCE STATISTICS:\n")
+            character_stats = {
+                "Mike Wheeler": character_metrics_df["mike_wheeler_present"].sum(),
+                "Eleven": character_metrics_df["eleven_present"].sum(),
+                "Nancy": character_metrics_df["nancy_present"].sum(),
+            }
+
+            for char, count in character_stats.items():
+                percentage = (count / len(character_metrics_df)) * 100
+                f.write(
+                    f"  {char}: {count}/{len(character_metrics_df)} conditions ({percentage:.1f}%)\n"
+                )
+            f.write("\n")
+
+        # ANOVA Results
+        if anova_results and len(anova_results) > 0:
+            f.write("ANOVA RESULTS: DWELL TIME BY CHARACTER PRESENCE\n")
+            f.write("-" * 47 + "\n")
+
+            significant_anovas = [r for r in anova_results if r["significant"]]
+            f.write(f"Total ANOVA tests performed: {len(anova_results)}\n")
+            f.write(f"Significant differences found: {len(significant_anovas)}\n\n")
+
+            if significant_anovas:
+                f.write("SIGNIFICANT ANOVA RESULTS:\n")
+                for result in significant_anovas:
+                    direction = (
+                        "higher"
+                        if result["present_mean"] > result["absent_mean"]
+                        else "lower"
+                    )
+                    f.write(f"\n{result['cap_metric']} - {result['character']}:\n")
+                    f.write(
+                        f"  F(1, {result['total_n']-2}) = {result['f_statistic']:.3f}, p = {result['p_value']:.3f}\n"
+                    )
+                    f.write(
+                        f"  Effect: Dwell time is {direction} when {result['character']} is present\n"
+                    )
+                    f.write(
+                        f"  Present: M = {result['present_mean']:.2f} (n = {result['present_n']})\n"
+                    )
+                    f.write(
+                        f"  Absent: M = {result['absent_mean']:.2f} (n = {result['absent_n']})\n"
+                    )
+                    f.write(
+                        f"  Effect size: d = {result['cohens_d']:.3f} ({result['effect_size']})\n"
+                    )
+
+                f.write("\nINTERPRETATION:\n")
+                f.write(
+                    "Significant ANOVA results indicate that dwell time in these CAP states\n"
+                )
+                f.write(
+                    "differs significantly when specific characters are on screen vs. absent.\n\n"
+                )
+            else:
+                f.write("No significant ANOVA results found.\n")
+                f.write(
+                    "Dwell time does not significantly differ by character presence.\n\n"
+                )
+
+            # All ANOVA results
+            f.write("ALL ANOVA RESULTS:\n")
+            for result in anova_results:
+                sig_marker = (
+                    "***"
+                    if result["p_value"] < 0.001
+                    else (
+                        "**"
+                        if result["p_value"] < 0.01
+                        else "*" if result["p_value"] < 0.05 else ""
+                    )
+                )
+                f.write(
+                    f"{result['cap_metric']} - {result['character']}: F = {result['f_statistic']:.3f}, p = {result['p_value']:.3f}{sig_marker}\n"
+                )
+
+            f.write("\n")
+
+        # Correlation Results
+        if len(correlation_results) > 0:
+            f.write("CHARACTER PRESENCE - DWELL TIME CORRELATIONS\n")
+            f.write("-" * 42 + "\n")
+
+            sig_corrs = correlation_results[correlation_results["significant"]]
+            f.write(f"Total correlations calculated: {len(correlation_results)}\n")
+            f.write(f"Significant correlations: {len(sig_corrs)}\n\n")
+
+            if len(sig_corrs) > 0:
+                f.write("Significant correlations:\n")
+                for _, row in sig_corrs.sort_values("p_value").iterrows():
+                    direction = "positive" if row["r"] > 0 else "negative"
+                    f.write(
+                        f"  {row['cap']} - {row['character']}: r = {row['r']:.3f}, p = {row['p_value']:.3f} ({direction}, {row['effect_size']})\n"
+                    )
+
+            f.write("\nAll correlations by character:\n")
+            for character in correlation_results["character"].unique():
+                f.write(f"\n{character.upper()}:\n")
+                char_corrs = correlation_results[
+                    correlation_results["character"] == character
+                ]
+                for _, row in char_corrs.iterrows():
+                    sig_marker = "*" if row["significant"] else ""
+                    f.write(
+                        f"  {row['cap']}: r = {row['r']:.3f}, p = {row['p_value']:.3f}{sig_marker}\n"
+                    )
+
+        f.write(f"\n* p < 0.05, ** p < 0.01, *** p < 0.001\n")
+        f.write("Analysis completed.\n")
+
+    print(
+        "Character dwell time report saved to: character_dwell_time_analysis_report.txt"
+    )
+
+
+def main_character_dwell_time_analysis():
+    """
+    Main analysis function for character-specific dwell time analysis.
+    """
+    print("=== CHARACTER-SPECIFIC DWELL TIME ANALYSIS ===")
+    print("Analyzing how dwell time varies with character presence on screen")
+    print("=" * 60)
+
+    # 1. Load character data
+    character_data, participants = load_character_data()
+
+    # Get reliable participants (for consistency with other analyses)
+    reliable_participants = character_data["participant_id"].tolist()
+
+    # 2. Load character events data
+    events_data = load_character_events_data()
+
+    if len(events_data) == 0:
+        print("No events data available. Exiting.")
+        return
+
+    # 3. Load CAPs and calculate character-specific metrics
+    character_metrics = load_caps_and_calculate_character_metrics(
+        events_data, reliable_participants
+    )
+
+    if len(character_metrics) == 0:
+        print("No character metrics calculated. Exiting.")
+        return
+
+    # 4. Analyze dwell time by character presence with ANOVA
+    anova_results = analyze_dwell_time_by_character_presence(character_metrics)
+
+    # 5. Calculate correlations between character presence and dwell times
+    correlation_results = correlate_character_metrics_with_cap_dwell_times(
+        character_metrics
+    )
+
+    # 6. Save results
+    if len(character_metrics) > 0:
+        character_metrics.to_csv(
+            "character_specific_cap_metrics.tsv", sep="\t", index=False
+        )
+        print("Character-specific metrics saved to: character_specific_cap_metrics.tsv")
+
+    if len(correlation_results) > 0:
+        correlation_results.to_csv(
+            "character_dwell_time_correlations.tsv", sep="\t", index=False
+        )
+        print("Character correlations saved to: character_dwell_time_correlations.tsv")
+
+    # 7. Generate comprehensive report
+    generate_character_dwell_time_report(
+        character_metrics, correlation_results, anova_results
+    )
+
+    print("\n=== CHARACTER-SPECIFIC DWELL TIME ANALYSIS COMPLETED ===")
+    return character_metrics, correlation_results, anova_results
 
 
 def create_character_appearance_timeseries(
@@ -876,4 +1639,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # Choose which analysis to run
+    analysis_type = input(
+        "Choose analysis type:\n1. Original character-CAP analysis\n2. Character dwell time analysis\nEnter 1 or 2: "
+    ).strip()
+
+    if analysis_type == "2":
+        main_character_dwell_time_analysis()
+    else:
+        main()

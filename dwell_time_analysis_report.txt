@@ -1,0 +1,168 @@
+DWELL TIME - EMOTION CORRELATION ANALYSIS REPORT
+=======================================================
+
+ANALYSIS OVERVIEW
+-----------------
+This analysis examined how CAP dwell time varies with emotion conditions.
+Dwell time = average number of consecutive TRs spent in each CAP state.
+Conditions defined by valence and arousal scores.
+
+Total conditions analyzed: 42
+Participants: 3
+Condition duration range: 1.5s - 1.5s
+Valence range: 1.7 - 7.0
+Arousal range: 1.0 - 6.4
+
+ANOVA RESULTS: DWELL TIME BY EMOTION QUADRANT
+-------------------------------------------
+Total ANOVA tests performed: 5
+Significant differences found: 1
+
+SIGNIFICANT ANOVA RESULTS:
+
+CAP_5_avg_dwell_time:
+  F(3, 38) = 3.076, p = 0.039
+  Group means:
+    val_high_ar_low: M = 0.14 (n = 7)
+    val_high_ar_high: M = 0.44 (n = 18)
+    val_low_ar_low: M = 0.07 (n = 14)
+    val_low_ar_high: M = 0.67 (n = 3)
+
+INTERPRETATION:
+Significant ANOVA results indicate that dwell time in these CAP states
+differs significantly across emotion quadrants (high/low valence x arousal).
+
+ALL ANOVA RESULTS:
+CAP_1_avg_dwell_time: F = 0.178, p = 0.910
+CAP_2_avg_dwell_time: F = 0.745, p = 0.532
+CAP_3_avg_dwell_time: F = 2.662, p = 0.062
+CAP_4_avg_dwell_time: F = 2.153, p = 0.110
+CAP_5_avg_dwell_time: F = 3.076, p = 0.039*
+
+DWELL TIME CORRELATION RESULTS
+-------------------------------
+Total dwell time correlations: 100
+Significant dwell time correlations: 16
+
+Significant dwell time correlations:
+  CAP_5 avg_dwell_time vs arousal: r = 0.379, p = 0.013 (medium)
+  CAP_5 avg_dwell_time vs arousal_t: r = 0.379, p = 0.013 (medium)
+  CAP_5 max_dwell_time vs arousal: r = 0.379, p = 0.013 (medium)
+  CAP_5 max_dwell_time vs arousal_t: r = 0.379, p = 0.013 (medium)
+  CAP_5 total_dwell_time vs arousal: r = 0.379, p = 0.013 (medium)
+  CAP_5 total_dwell_time vs arousal_t: r = 0.379, p = 0.013 (medium)
+  CAP_5 avg_dwell_time_sec vs arousal: r = 0.379, p = 0.013 (medium)
+  CAP_5 avg_dwell_time_sec vs arousal_t: r = 0.379, p = 0.013 (medium)
+  CAP_3 avg_dwell_time vs arousal: r = -0.312, p = 0.044 (medium)
+  CAP_3 avg_dwell_time vs arousal_t: r = -0.312, p = 0.044 (medium)
+  CAP_3 max_dwell_time vs arousal: r = -0.312, p = 0.044 (medium)
+  CAP_3 max_dwell_time vs arousal_t: r = -0.312, p = 0.044 (medium)
+  CAP_3 total_dwell_time vs arousal: r = -0.312, p = 0.044 (medium)
+  CAP_3 total_dwell_time vs arousal_t: r = -0.312, p = 0.044 (medium)
+  CAP_3 avg_dwell_time_sec vs arousal: r = -0.312, p = 0.044 (medium)
+  CAP_3 avg_dwell_time_sec vs arousal_t: r = -0.312, p = 0.044 (medium)
+
+All dwell time correlations:
+  CAP_5 avg_dwell_time vs arousal_t: r = 0.379, p = 0.013*
+  CAP_5 avg_dwell_time vs arousal: r = 0.379, p = 0.013*
+  CAP_5 max_dwell_time vs arousal_t: r = 0.379, p = 0.013*
+  CAP_5 max_dwell_time vs arousal: r = 0.379, p = 0.013*
+  CAP_5 total_dwell_time vs arousal: r = 0.379, p = 0.013*
+  CAP_5 avg_dwell_time_sec vs arousal_t: r = 0.379, p = 0.013*
+  CAP_5 total_dwell_time vs arousal_t: r = 0.379, p = 0.013*
+  CAP_5 avg_dwell_time_sec vs arousal: r = 0.379, p = 0.013*
+  CAP_3 total_dwell_time vs arousal_t: r = -0.312, p = 0.044*
+  CAP_3 max_dwell_time vs arousal: r = -0.312, p = 0.044*
+  CAP_3 avg_dwell_time vs arousal_t: r = -0.312, p = 0.044*
+  CAP_3 avg_dwell_time vs arousal: r = -0.312, p = 0.044*
+  CAP_3 avg_dwell_time_sec vs arousal: r = -0.312, p = 0.044*
+  CAP_3 avg_dwell_time_sec vs arousal_t: r = -0.312, p = 0.044*
+  CAP_3 max_dwell_time vs arousal_t: r = -0.312, p = 0.044*
+  CAP_3 total_dwell_time vs arousal: r = -0.312, p = 0.044*
+  CAP_4 avg_dwell_time vs valence_t: r = -0.281, p = 0.071
+  CAP_4 max_dwell_time vs valence_t: r = -0.281, p = 0.071
+  CAP_4 total_dwell_time vs valence: r = -0.281, p = 0.071
+  CAP_4 total_dwell_time vs valence_t: r = -0.281, p = 0.071
+  CAP_4 avg_dwell_time_sec vs valence: r = -0.281, p = 0.071
+  CAP_4 avg_dwell_time_sec vs valence_t: r = -0.281, p = 0.071
+  CAP_4 avg_dwell_time vs valence: r = -0.281, p = 0.071
+  CAP_4 max_dwell_time vs valence: r = -0.281, p = 0.071
+  CAP_1 avg_dwell_time vs valence: r = 0.176, p = 0.264
+  CAP_1 avg_dwell_time vs valence_t: r = 0.176, p = 0.264
+  CAP_1 max_dwell_time vs valence: r = 0.176, p = 0.264
+  CAP_1 max_dwell_time vs valence_t: r = 0.176, p = 0.264
+  CAP_1 avg_dwell_time_sec vs valence_t: r = 0.176, p = 0.264
+  CAP_1 total_dwell_time vs valence: r = 0.176, p = 0.264
+  CAP_1 avg_dwell_time_sec vs valence: r = 0.176, p = 0.264
+  CAP_1 total_dwell_time vs valence_t: r = 0.176, p = 0.264
+  CAP_2 avg_dwell_time vs valence_t: r = -0.157, p = 0.321
+  CAP_2 avg_dwell_time_sec vs valence: r = -0.157, p = 0.321
+  CAP_2 total_dwell_time vs valence_t: r = -0.157, p = 0.321
+  CAP_2 max_dwell_time vs valence_t: r = -0.157, p = 0.321
+  CAP_2 avg_dwell_time_sec vs valence_t: r = -0.157, p = 0.321
+  CAP_2 avg_dwell_time vs valence: r = -0.157, p = 0.321
+  CAP_2 max_dwell_time vs valence: r = -0.157, p = 0.321
+  CAP_2 total_dwell_time vs valence: r = -0.157, p = 0.321
+  CAP_5 avg_dwell_time_sec vs valence: r = 0.144, p = 0.363
+  CAP_5 max_dwell_time vs valence: r = 0.144, p = 0.363
+  CAP_5 avg_dwell_time vs valence_t: r = 0.144, p = 0.363
+  CAP_5 avg_dwell_time vs valence: r = 0.144, p = 0.363
+  CAP_5 total_dwell_time vs valence: r = 0.144, p = 0.363
+  CAP_5 avg_dwell_time_sec vs valence_t: r = 0.144, p = 0.363
+  CAP_5 total_dwell_time vs valence_t: r = 0.144, p = 0.363
+  CAP_5 max_dwell_time vs valence_t: r = 0.144, p = 0.363
+  CAP_2 max_dwell_time vs arousal: r = -0.063, p = 0.694
+  CAP_2 avg_dwell_time vs arousal_t: r = -0.063, p = 0.694
+  CAP_2 max_dwell_time vs arousal_t: r = -0.063, p = 0.694
+  CAP_2 avg_dwell_time vs arousal: r = -0.063, p = 0.694
+  CAP_2 avg_dwell_time_sec vs arousal: r = -0.063, p = 0.694
+  CAP_2 total_dwell_time vs arousal: r = -0.063, p = 0.694
+  CAP_2 total_dwell_time vs arousal_t: r = -0.063, p = 0.694
+  CAP_2 avg_dwell_time_sec vs arousal_t: r = -0.063, p = 0.694
+  CAP_4 avg_dwell_time_sec vs arousal: r = -0.014, p = 0.931
+  CAP_4 avg_dwell_time_sec vs arousal_t: r = -0.014, p = 0.931
+  CAP_4 avg_dwell_time vs arousal: r = -0.014, p = 0.931
+  CAP_4 avg_dwell_time vs arousal_t: r = -0.014, p = 0.931
+  CAP_4 max_dwell_time vs arousal_t: r = -0.014, p = 0.931
+  CAP_4 total_dwell_time vs arousal: r = -0.014, p = 0.931
+  CAP_4 max_dwell_time vs arousal: r = -0.014, p = 0.931
+  CAP_4 total_dwell_time vs arousal_t: r = -0.014, p = 0.931
+  CAP_1 avg_dwell_time vs arousal_t: r = 0.011, p = 0.947
+  CAP_1 max_dwell_time vs arousal_t: r = 0.011, p = 0.947
+  CAP_1 total_dwell_time vs arousal_t: r = 0.011, p = 0.947
+  CAP_1 avg_dwell_time_sec vs arousal_t: r = 0.011, p = 0.947
+  CAP_1 avg_dwell_time_sec vs arousal: r = 0.011, p = 0.947
+  CAP_1 total_dwell_time vs arousal: r = 0.011, p = 0.947
+  CAP_1 max_dwell_time vs arousal: r = 0.011, p = 0.947
+  CAP_1 avg_dwell_time vs arousal: r = 0.011, p = 0.947
+  CAP_3 avg_dwell_time vs valence_t: r = 0.001, p = 0.994
+  CAP_3 avg_dwell_time vs valence: r = 0.001, p = 0.994
+  CAP_3 total_dwell_time vs valence: r = 0.001, p = 0.994
+  CAP_3 total_dwell_time vs valence_t: r = 0.001, p = 0.994
+  CAP_3 avg_dwell_time_sec vs valence: r = 0.001, p = 0.994
+  CAP_3 avg_dwell_time_sec vs valence_t: r = 0.001, p = 0.994
+  CAP_3 max_dwell_time vs valence_t: r = 0.001, p = 0.994
+  CAP_3 max_dwell_time vs valence: r = 0.001, p = 0.994
+  CAP_1 std_dwell_time vs valence: r = nan, p = nan
+  CAP_1 std_dwell_time vs arousal: r = nan, p = nan
+  CAP_1 std_dwell_time vs valence_t: r = nan, p = nan
+  CAP_1 std_dwell_time vs arousal_t: r = nan, p = nan
+  CAP_3 std_dwell_time vs valence: r = nan, p = nan
+  CAP_3 std_dwell_time vs arousal: r = nan, p = nan
+  CAP_3 std_dwell_time vs valence_t: r = nan, p = nan
+  CAP_3 std_dwell_time vs arousal_t: r = nan, p = nan
+  CAP_4 std_dwell_time vs valence: r = nan, p = nan
+  CAP_4 std_dwell_time vs arousal: r = nan, p = nan
+  CAP_4 std_dwell_time vs valence_t: r = nan, p = nan
+  CAP_4 std_dwell_time vs arousal_t: r = nan, p = nan
+  CAP_5 std_dwell_time vs valence: r = nan, p = nan
+  CAP_5 std_dwell_time vs arousal: r = nan, p = nan
+  CAP_5 std_dwell_time vs valence_t: r = nan, p = nan
+  CAP_5 std_dwell_time vs arousal_t: r = nan, p = nan
+  CAP_2 std_dwell_time vs valence: r = nan, p = nan
+  CAP_2 std_dwell_time vs arousal: r = nan, p = nan
+  CAP_2 std_dwell_time vs valence_t: r = nan, p = nan
+  CAP_2 std_dwell_time vs arousal_t: r = nan, p = nan
+
+* p < 0.05, ** p < 0.01, *** p < 0.001
+Analysis completed.

@@ -53,6 +53,9 @@ verbs = [
     "laugh",
 ]
 
+# Define character list for on-screen appearances
+characters = ["Mike Wheeler", "Eleven", "Nancy"]
+
 
 def create_rater_data(rater_id):
     n_trials = len(onset_values)
@@ -65,6 +68,9 @@ def create_rater_data(rater_id):
         "verbs": random.choices(verbs, k=n_trials),
         "valence": np.random.randint(1, 8, n_trials),  # 1-7
         "arousal": np.random.randint(1, 8, n_trials),  # 1-7
+        "characters": random.choices(
+            characters, k=n_trials
+        ),  # Random character selection
     }
 
     return pd.DataFrame(data)

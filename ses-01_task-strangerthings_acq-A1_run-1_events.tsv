@@ -1,15 +1,15 @@
-onset	duration	nouns	verbs	valence	arousal
-3.0	1.5	table	drive	7	4
-4.5	1.5	bicycle	read	4	3
-6.0	1.5	tree	walk	5	6
-7.5	1.5	tree	write	7	5
-9.0	1.5	phone	play	3	2
-10.5	1.5	computer	run	5	4
-12.0	1.5	ocean	play	5	6
-13.5	1.5	leaf	sleep	7	6
-15.0	1.5	car	climb	2	2
-16.5	1.5	bicycle	ride	3	4
-18.0	1.5	house	laugh	7	5
-19.5	1.5	bird	climb	3	1
-21.0	1.5	bicycle	jump	3	4
-22.5	1.5	house	jump	5	2
+onset	duration	nouns	verbs	valence	arousal	characters
+3.0	1.5	table	drive	7	4	Nancy
+4.5	1.5	bicycle	read	4	3	Eleven
+6.0	1.5	tree	walk	5	6	Nancy
+7.5	1.5	tree	write	7	5	Nancy
+9.0	1.5	phone	play	3	2	Eleven
+10.5	1.5	computer	run	5	4	Nancy
+12.0	1.5	ocean	play	5	6	Eleven
+13.5	1.5	leaf	sleep	7	6	Eleven
+15.0	1.5	car	climb	2	2	Nancy
+16.5	1.5	bicycle	ride	3	4	Eleven
+18.0	1.5	house	laugh	7	5	Nancy
+19.5	1.5	bird	climb	3	1	Eleven
+21.0	1.5	bicycle	jump	3	4	Nancy
+22.5	1.5	house	jump	5	2	Mike Wheeler
