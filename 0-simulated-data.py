@@ -1,6 +1,7 @@
 import pandas as pd
 import random
 import numpy as np
+from pathlib import Path
 
 # Set random seed for reproducibility
 random.seed(42)
@@ -88,8 +89,11 @@ print("Generating data for Rater A2...")
 rater_a2_data = create_rater_data("A2")
 
 # Define file names
-filename_a1 = "ses-01_task-strangerthings_acq-A1_run-1_events.tsv"
-filename_a2 = "ses-01_task-strangerthings_acq-A2_run-1_events.tsv"
+filename_a1 = "derivatives/simulated/ses-01_task-strangerthings_acq-A1_run-1_events.tsv"
+filename_a2 = "derivatives/simulated/ses-01_task-strangerthings_acq-A2_run-1_events.tsv"
+
+# Create output directory
+Path("derivatives/simulated").mkdir(parents=True, exist_ok=True)
 
 # Save to TSV files
 print(f"Saving {filename_a1}...")
@@ -155,7 +159,7 @@ participants_characters_data = {
 participants_characters_df = pd.DataFrame(participants_characters_data)
 
 # Save participants-characters file
-participants_characters_filename = "participants-characters.tsv"
+participants_characters_filename = "derivatives/simulated/participants-characters.tsv"
 print(f"Saving {participants_characters_filename}...")
 participants_characters_df.to_csv(
     participants_characters_filename, sep="\t", index=False
@@ -187,7 +191,7 @@ participants_demo_data = {
 participants_demo_df = pd.DataFrame(participants_demo_data)
 
 # Save participants demographics file
-participants_demo_filename = "participants.tsv"
+participants_demo_filename = "derivatives/simulated/participants.tsv"
 print(f"Saving {participants_demo_filename}...")
 participants_demo_df.to_csv(participants_demo_filename, sep="\t", index=False)
 

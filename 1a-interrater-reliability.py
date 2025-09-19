@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import pingouin as pg
+from pathlib import Path
 
 
 def fisher_z_transform(r):
@@ -168,8 +169,12 @@ def main():
 
     # Load the two rater files
     try:
-        rater_a1_file = "ses-01_task-strangerthings_acq-A1_run-1_events.tsv"
-        rater_a2_file = "ses-01_task-strangerthings_acq-A2_run-1_events.tsv"
+        rater_a1_file = (
+            "derivatives/simulated/ses-01_task-strangerthings_acq-A1_run-1_events.tsv"
+        )
+        rater_a2_file = (
+            "derivatives/simulated/ses-01_task-strangerthings_acq-A2_run-1_events.tsv"
+        )
 
         rater_a1_data = pd.read_csv(rater_a1_file, sep="\t")
         rater_a2_data = pd.read_csv(rater_a2_file, sep="\t")
@@ -312,7 +317,9 @@ def main():
     print("      indicating insufficient evidence for true reliability")
 
     # Save results to file
-    results_file = "interrater_reliability_results.tsv"
+    output_dir = Path("derivatives/caps/interrater")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    results_file = output_dir / "interrater_reliability_results.tsv"
     results_df.to_csv(results_file, sep="\t", index=False)
     print(f"\nResults saved to: {results_file}")
 

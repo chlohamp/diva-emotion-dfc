@@ -1,10 +1,10 @@
 test_type	cap	metric	test	value	interpretation
-descriptive	CAP_1	frequency_pct	single_subject_value	11.98044009779951	CAP occurs 12.0% of the time
-descriptive	CAP_1	transitions_out	single_subject_value	14.0	CAP transitions out 14 times
-descriptive	CAP_4	frequency_pct	single_subject_value	19.559902200489	CAP occurs 19.6% of the time
-descriptive	CAP_4	transitions_out	single_subject_value	21.0	CAP transitions out 21 times
 descriptive	CAP_2	frequency_pct	single_subject_value	38.87530562347188	CAP occurs 38.9% of the time
 descriptive	CAP_2	transitions_out	single_subject_value	49.0	CAP transitions out 49 times
+descriptive	CAP_4	frequency_pct	single_subject_value	19.559902200489	CAP occurs 19.6% of the time
+descriptive	CAP_4	transitions_out	single_subject_value	21.0	CAP transitions out 21 times
+descriptive	CAP_1	frequency_pct	single_subject_value	11.98044009779951	CAP occurs 12.0% of the time
+descriptive	CAP_1	transitions_out	single_subject_value	14.0	CAP transitions out 14 times
 descriptive	CAP_3	frequency_pct	single_subject_value	29.584352078239608	CAP occurs 29.6% of the time
 descriptive	CAP_3	transitions_out	single_subject_value	40.0	CAP transitions out 40 times
 descriptive	OVERALL	overall_transition_rate	single_subject_value	0.30317848410757947	Overall transition rate: 0.303 transitions per timepoint

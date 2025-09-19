@@ -24,9 +24,9 @@ plt.switch_backend("Agg")
 
 
 def load_reliable_emotion_data(
-    events_file_a1="ses-01_task-strangerthings_acq-A1_run-1_events.tsv",
-    events_file_a2="ses-01_task-strangerthings_acq-A2_run-1_events.tsv",
-    participants_file="participants.tsv",
+    events_file_a1="derivatives/simulated/ses-01_task-strangerthings_acq-A1_run-1_events.tsv",
+    events_file_a2="derivatives/simulated/ses-01_task-strangerthings_acq-A2_run-1_events.tsv",
+    participants_file="derivatives/simulated/participants.tsv",
     icc_threshold=0.3,  # Lowered threshold for simulated data
 ):
     """Load emotion data with reliability filtering."""
@@ -134,7 +134,9 @@ def load_reliable_emotion_data(
 
 
 def load_cap_metrics_data(
-    cap_results_file="caps_results_sub_Bubbles_ses_01/cap_metrics.tsv",
+    cap_results_file=(
+        "derivatives/caps/cap-analysis/sub_Bubbles_ses_01/cap_metrics.tsv"
+    ),
 ):
     """Load CAP metrics from previous analysis."""
     print("Loading CAP metrics data...")
@@ -166,7 +168,10 @@ def load_cap_metrics_data(
 
         # Try alternative locations
         alternative_paths = [
+            "derivatives/caps/cap-analysis/sub_Bubbles_ses_01/cap_metrics.tsv",
+            "derivatives/caps_results_sub_Bubbles_ses_01/cap_metrics.tsv",
             "caps_results_sub_Bubbles_ses_01/cap_metrics.tsv",
+            "derivatives/caps_results/cap_metrics.tsv",
             "caps_results/cap_metrics.tsv",
             "cap_metrics.tsv",
         ]
@@ -1288,7 +1293,7 @@ def calculate_condition_specific_cap_metrics(
 def load_caps_and_calculate_condition_metrics(
     emotion_data,
     reliable_participants,
-    caps_results_dir="caps_results_sub_pretend_ses_01",
+    caps_results_dir="derivatives/caps/cap-analysis/sub_Bubbles_ses_01",
     tr_duration=1.5,
 ):
     """
@@ -1536,6 +1541,14 @@ def main():
     print("Starting Emotion-CAPs Correlation Analysis...")
     print("=" * 50)
 
+    # Create output directories
+    from pathlib import Path
+
+    output_dir = Path("derivatives/caps/cap-analysis/sub_Bubbles_ses_01")
+    figures_dir = Path("derivatives/caps/cap-analysis/figures")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    figures_dir.mkdir(parents=True, exist_ok=True)
+
     # 1. Load reliable emotion data
     emotion_data, participants_df, reliable_participants = load_reliable_emotion_data()
 
@@ -1559,7 +1572,9 @@ def main():
     summary_stats = calculate_subject_statistics(individual_results)
 
     # Plot individual results
-    plot_individual_results(individual_results, "individual_subject_caps.png")
+    plot_individual_results(
+        individual_results, figures_dir / "individual_subject_caps.png"
+    )
 
     # 5. GROUP-LEVEL ANALYSES (original approach)
     print("\n" + "=" * 50)
@@ -1652,41 +1667,70 @@ def main():
     # 7. Run emotion-transition correlation analyses
     transition_results = run_emotion_transition_correlations(df_analysis, cap_metrics)
 
+    # Create output directories
+    from pathlib import Path
+
+    output_dir = Path("derivatives/caps/cap-analysis/sub_Bubbles_ses_01")
+    figures_dir = Path("derivatives/caps/cap-analysis/figures")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    figures_dir.mkdir(parents=True, exist_ok=True)
+
     # 8. Plot results
-    plot_correlation_results(correlation_df, "emotion_caps_correlations.png")
+    plot_correlation_results(
+        correlation_df, figures_dir / "emotion_caps_correlations.png"
+    )
 
     # 9. Generate summary report
-    generate_summary_report(correlation_df, lme_results, transition_results)
+    generate_summary_report(
+        correlation_df,
+        lme_results,
+        transition_results,
+        output_file=output_dir / "emotion_caps_analysis_report.txt",
+    )
 
     # 10. Save detailed results
 
     # Save individual subject results
     if len(individual_results) > 0:
         individual_results.to_csv(
-            "individual_subject_results.tsv", sep="\t", index=False
+            output_dir / "individual_subject_results.tsv", sep="\t", index=False
         )
-        print("Individual subject results saved to: individual_subject_results.tsv")
+        print(
+            f"Individual subject results saved to: {output_dir / 'individual_subject_results.tsv'}"
+        )
 
     if len(summary_stats) > 0:
         summary_stats.to_csv(
-            "individual_subject_summary_stats.tsv", sep="\t", index=False
+            output_dir / "individual_subject_summary_stats.tsv", sep="\t", index=False
         )
-        print("Summary statistics saved to: individual_subject_summary_stats.tsv")
+        print(
+            f"Summary statistics saved to: {output_dir / 'individual_subject_summary_stats.tsv'}"
+        )
 
     # Save group-level results
     if len(correlation_df) > 0:
-        correlation_df.to_csv("emotion_caps_correlations.tsv", sep="\t", index=False)
-        print("Group correlation results saved to: emotion_caps_correlations.tsv")
+        correlation_df.to_csv(
+            output_dir / "emotion_caps_correlations.tsv", sep="\t", index=False
+        )
+        print(
+            f"Group correlation results saved to: {output_dir / 'emotion_caps_correlations.tsv'}"
+        )
 
     if len(lme_results) > 0:
-        lme_results.to_csv("emotion_caps_lme_results.tsv", sep="\t", index=False)
+        lme_results.to_csv(
+            output_dir / "emotion_caps_lme_results.tsv", sep="\t", index=False
+        )
         print("LME results saved to: emotion_caps_lme_results.tsv")
 
     if len(transition_results) > 0:
         transition_results.to_csv(
-            "emotion_caps_transition_results.tsv", sep="\t", index=False
+            output_dir / "emotion_caps_transition_results.tsv",
+            sep="\t",
+            index=False,
         )
-        print("Transition results saved to: emotion_caps_transition_results.tsv")
+        print(
+            f"Transition results saved to: {output_dir / 'emotion_caps_transition_results.tsv'}"
+        )
 
     print("\nAnalysis completed successfully!")
     print("=" * 50)
@@ -1742,21 +1786,36 @@ def main_condition_specific():
     anova_results = analyze_dwell_time_by_emotion_quadrant(condition_metrics)
 
     # 5. Save results
+    # Create output directories
+    from pathlib import Path
+
+    output_dir = Path("derivatives/caps/cap-analysis/sub_Bubbles_ses_01")
+    figures_dir = Path("derivatives/caps/cap-analysis/figures")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    figures_dir.mkdir(parents=True, exist_ok=True)
+
     if len(condition_metrics) > 0:
         condition_metrics.to_csv(
-            "condition_specific_cap_metrics.tsv", sep="\t", index=False
+            output_dir / "condition_specific_cap_metrics.tsv", sep="\t", index=False
         )
-        print("Condition-specific metrics saved to: condition_specific_cap_metrics.tsv")
+        print(
+            f"Condition-specific metrics saved to: {output_dir / 'condition_specific_cap_metrics.tsv'}"
+        )
 
     if len(correlation_results) > 0:
         correlation_results.to_csv(
-            "dwell_time_emotion_correlations.tsv", sep="\t", index=False
+            output_dir / "dwell_time_emotion_correlations.tsv", sep="\t", index=False
         )
-        print("Dwell time correlations saved to: dwell_time_emotion_correlations.tsv")
+        print(
+            f"Dwell time correlations saved to: {output_dir / 'dwell_time_emotion_correlations.tsv'}"
+        )
 
     # 6. Generate summary report including ANOVA results
     generate_dwell_time_summary_report(
-        condition_metrics, correlation_results, anova_results
+        condition_metrics,
+        correlation_results,
+        anova_results,
+        output_file=output_dir / "dwell_time_analysis_report.txt",
     )
 
     print("\n=== CONDITION-SPECIFIC DWELL TIME ANALYSIS COMPLETED ===")
@@ -1981,12 +2040,15 @@ def analyze_valence_arousal_main_effects(condition_metrics, dwell_cols):
 
 
 def generate_dwell_time_summary_report(
-    condition_metrics, correlation_results, anova_results=None
+    condition_metrics,
+    correlation_results,
+    anova_results=None,
+    output_file="dwell_time_analysis_report.txt",
 ):
     """Generate a focused report on dwell time findings including ANOVA results."""
     print("\nGenerating dwell time analysis report...")
 
-    with open("dwell_time_analysis_report.txt", "w") as f:
+    with open(output_file, "w") as f:
         f.write("DWELL TIME - EMOTION CORRELATION ANALYSIS REPORT\n")
         f.write("=" * 55 + "\n\n")
 
@@ -2101,7 +2163,7 @@ def generate_dwell_time_summary_report(
         f.write(f"\n* p < 0.05, ** p < 0.01, *** p < 0.001\n")
         f.write("Analysis completed.\n")
 
-    print("Dwell time report saved to: dwell_time_analysis_report.txt")
+    print(f"Dwell time report saved to: {output_file}")
 
 
 if __name__ == "__main__":

@@ -1,2 +1,2 @@
 run	total_timepoints	n_clusters	CAP_1_frequency_pct	CAP_2_frequency_pct	CAP_3_frequency_pct	CAP_4_frequency_pct	CAP_1_transitions_out	CAP_2_transitions_out	CAP_3_transitions_out	CAP_4_transitions_out	total_transitions	overall_transition_rate
-sub_Bubbles_task-stranger	409	4	11.98044009779951	38.87530562347188	29.584352078239608	19.559902200489	14	49	40	21	124	0.30317848410757947
+derivatives/simulated/sub_Bubbles_task-stranger	409	4	11.98044009779951	38.87530562347188	29.584352078239608	19.559902200489	14	49	40	21	124	0.30317848410757947

@@ -25,8 +25,8 @@ plt.switch_backend("Agg")
 
 
 def load_character_data(
-    participants_characters_file="participants-characters.tsv",
-    participants_file="participants.tsv",
+    participants_characters_file="derivatives/simulated/participants-characters.tsv",
+    participants_file="derivatives/simulated/participants.tsv",
 ):
     """Load character rating data."""
     print("Loading character rating data...")
@@ -44,8 +44,8 @@ def load_character_data(
 
 
 def load_character_events_data(
-    events_file_a1="ses-01_task-strangerthings_acq-A1_run-1_events.tsv",
-    events_file_a2="ses-01_task-strangerthings_acq-A2_run-1_events.tsv",
+    events_file_a1="derivatives/simulated/ses-01_task-strangerthings_acq-A1_run-1_events.tsv",
+    events_file_a2="derivatives/simulated/ses-01_task-strangerthings_acq-A2_run-1_events.tsv",
 ):
     """Load events data with character appearances."""
     print("Loading character events data...")
@@ -263,7 +263,7 @@ def calculate_character_specific_cap_metrics(
 def load_caps_and_calculate_character_metrics(
     events_data,
     reliable_participants,
-    caps_results_dir="caps_results_sub_pretend_ses_01",
+    caps_results_dir="derivatives/caps/cap-analysis/sub_Bubbles_ses_01",
     tr_duration=1.5,
 ):
     """
@@ -285,9 +285,24 @@ def load_caps_and_calculate_character_metrics(
         print(f"Warning: Could not find {timeseries_file}")
         print("Generating simulated cluster labels for demonstration...")
 
-        # Generate simulated cluster labels (5 clusters, random assignment)
+        # Try to detect number of clusters from CAP metrics
+        try:
+            # Try to load cap metrics to get number of clusters
+            cap_metrics_file = f"{caps_results_dir}/cap_metrics.tsv"
+            cap_metrics = pd.read_csv(cap_metrics_file, sep="\t")
+            n_clusters = (
+                cap_metrics["n_clusters"].iloc[0]
+                if "n_clusters" in cap_metrics.columns
+                else 4
+            )
+            print(f"Detected {n_clusters} clusters from CAP metrics")
+        except FileNotFoundError:
+            print("Could not find CAP metrics file, using default 4 clusters")
+            n_clusters = 4
+
+        # Generate simulated cluster labels with detected number of clusters
         n_timepoints = 300  # Approximate length for demo
-        cluster_labels = np.random.randint(0, 5, n_timepoints)
+        cluster_labels = np.random.randint(0, n_clusters, n_timepoints)
 
     # Calculate character-specific metrics for each participant
     all_character_metrics = []
@@ -599,12 +614,15 @@ def correlate_character_metrics_with_cap_dwell_times(character_metrics_df):
 
 
 def generate_character_dwell_time_report(
-    character_metrics_df, correlation_results, anova_results
+    character_metrics_df,
+    correlation_results,
+    anova_results,
+    output_file="character_dwell_time_analysis_report.txt",
 ):
     """Generate a comprehensive report on character dwell time findings."""
     print("\nGenerating character dwell time analysis report...")
 
-    with open("character_dwell_time_analysis_report.txt", "w") as f:
+    with open(output_file, "w") as f:
         f.write("CHARACTER DWELL TIME ANALYSIS REPORT\n")
         f.write("=" * 50 + "\n\n")
 
@@ -740,9 +758,7 @@ def generate_character_dwell_time_report(
         f.write(f"\n* p < 0.05, ** p < 0.01, *** p < 0.001\n")
         f.write("Analysis completed.\n")
 
-    print(
-        "Character dwell time report saved to: character_dwell_time_analysis_report.txt"
-    )
+    print(f"Character dwell time report saved to: {output_file}")
 
 
 def main_character_dwell_time_analysis():
@@ -752,6 +768,14 @@ def main_character_dwell_time_analysis():
     print("=== CHARACTER-SPECIFIC DWELL TIME ANALYSIS ===")
     print("Analyzing how dwell time varies with character presence on screen")
     print("=" * 60)
+
+    # Create output directories
+    from pathlib import Path
+
+    output_dir = Path("derivatives/caps/cap-analysis/sub_Bubbles_ses_01")
+    figures_dir = Path("derivatives/caps/cap-analysis/figures")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    figures_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Load character data
     character_data, participants = load_character_data()
@@ -786,19 +810,26 @@ def main_character_dwell_time_analysis():
     # 6. Save results
     if len(character_metrics) > 0:
         character_metrics.to_csv(
-            "character_specific_cap_metrics.tsv", sep="\t", index=False
+            output_dir / "character_specific_cap_metrics.tsv", sep="\t", index=False
         )
-        print("Character-specific metrics saved to: character_specific_cap_metrics.tsv")
+        print(
+            f"Character-specific metrics saved to: {output_dir / 'character_specific_cap_metrics.tsv'}"
+        )
 
     if len(correlation_results) > 0:
         correlation_results.to_csv(
-            "character_dwell_time_correlations.tsv", sep="\t", index=False
+            output_dir / "character_dwell_time_correlations.tsv", sep="\t", index=False
         )
-        print("Character correlations saved to: character_dwell_time_correlations.tsv")
+        print(
+            f"Character correlations saved to: {output_dir / 'character_dwell_time_correlations.tsv'}"
+        )
 
     # 7. Generate comprehensive report
     generate_character_dwell_time_report(
-        character_metrics, correlation_results, anova_results
+        character_metrics,
+        correlation_results,
+        anova_results,
+        output_file=output_dir / "character_dwell_time_analysis_report.txt",
     )
 
     print("\n=== CHARACTER-SPECIFIC DWELL TIME ANALYSIS COMPLETED ===")
@@ -958,18 +989,80 @@ def weight_character_timeseries_by_ratings(
     return weighted_timeseries
 
 
-def load_cap_metrics_data(cap_results_file="caps_results/cluster_statistics.tsv"):
+def load_cap_metrics_data(
+    cap_results_file="derivatives/caps/cap-analysis/sub_Bubbles_ses_01/cap_metrics.tsv",
+):
     """Load CAP metrics from previous analysis."""
     print("Loading CAP metrics data...")
 
-    # Use simulated CAP data that matches our character analysis participants
-    print("Using simulated CAP data for character analysis...")
-    return generate_simulated_cap_metrics()
+    # Try to load real CAP metrics first to detect number of CAPs
+    try:
+        import pandas as pd
+
+        real_cap_metrics = pd.read_csv(cap_results_file, sep="\t")
+        print(f"Found real CAP metrics from {cap_results_file}")
+
+        # Extract number of CAPs from the real data
+        cap_columns = [
+            col
+            for col in real_cap_metrics.columns
+            if "CAP_" in col and "_frequency_pct" in col
+        ]
+        n_caps_found = len(cap_columns)
+        cap_names = [col.replace("_frequency_pct", "") for col in cap_columns]
+        print(f"Detected {n_caps_found} CAPs from real analysis: {cap_names}")
+
+        # Generate simulated data matching the real number of CAPs
+        print(f"Generating simulated CAP data with {n_caps_found} CAPs...")
+        return generate_simulated_cap_metrics(n_caps=n_caps_found)
+
+    except FileNotFoundError:
+        print(f"Warning: Could not find {cap_results_file}")
+        print("Trying alternative CAP results locations...")
+
+        # Try alternative locations
+        alternative_paths = [
+            "derivatives/caps/cap-analysis/sub_Bubbles_ses_01/cap_metrics.tsv",
+            "derivatives/caps_results_sub_Bubbles_ses_01/cap_metrics.tsv",
+            "caps_results_sub_Bubbles_ses_01/cap_metrics.tsv",
+            "derivatives/caps_results/cap_metrics.tsv",
+            "caps_results/cap_metrics.tsv",
+            "cap_metrics.tsv",
+        ]
+
+        for alt_path in alternative_paths:
+            try:
+                real_cap_metrics = pd.read_csv(alt_path, sep="\t")
+                print(f"Found real CAP metrics from {alt_path}")
+
+                # Extract number of CAPs
+                cap_columns = [
+                    col
+                    for col in real_cap_metrics.columns
+                    if "CAP_" in col and "_frequency_pct" in col
+                ]
+                n_caps_found = len(cap_columns)
+                print(f"Detected {n_caps_found} CAPs from real analysis")
+
+                return generate_simulated_cap_metrics(n_caps=n_caps_found)
+
+            except FileNotFoundError:
+                continue
+
+        # If no real CAP data found, use default
+        print("No CAP results found. Using default 4 CAPs...")
+        return generate_simulated_cap_metrics(n_caps=4)
 
 
-def generate_simulated_cap_metrics(n_subjects=3, n_runs=2, n_caps=5):
+def generate_simulated_cap_metrics(n_subjects=3, n_runs=2, n_caps=None):
     """Generate simulated CAP metrics matching character data participants."""
-    print(f"Generating simulated CAP metrics for {n_subjects} subjects...")
+    if n_caps is None:
+        # Auto-detect from real CAP analysis if not specified
+        n_caps = 4  # fallback default
+
+    print(
+        f"Generating simulated CAP metrics for {n_subjects} subjects with {n_caps} CAPs..."
+    )
 
     # Use the same participant IDs as in character data
     participant_ids = ["sub-Blossom", "sub-Bubbles", "sub-Buttercup"]
@@ -1535,6 +1628,14 @@ def main():
     print("Starting Character-CAPs Association Analysis...")
     print("=" * 50)
 
+    # Create output directories
+    from pathlib import Path
+
+    output_dir = Path("derivatives/caps/cap-analysis/sub_Bubbles_ses_01")
+    figures_dir = Path("derivatives/caps/cap-analysis/figures")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    figures_dir.mkdir(parents=True, exist_ok=True)
+
     # 1. Load character rating data
     character_data, participants = load_character_data()
 
@@ -1547,7 +1648,7 @@ def main():
 
     # 3. Visualize character timeseries
     visualize_character_timeseries(
-        character_timeseries_df, "character_appearance_timeseries.png"
+        character_timeseries_df, figures_dir / "character_appearance_timeseries.png"
     )
 
     # 4. Load CAP metrics
@@ -1576,7 +1677,8 @@ def main():
 
         # Plot results
         plot_character_correlation_results(
-            correlation_df, f"character_caps_correlations_{weight_type}.png"
+            correlation_df,
+            figures_dir / f"character_caps_correlations_{weight_type}.png",
         )
 
         # Generate report
@@ -1585,37 +1687,42 @@ def main():
             lme_results,
             transition_results,
             weight_type=weight_type,
-            output_file=f"character_caps_analysis_report_{weight_type}.txt",
+            output_file=output_dir
+            / f"character_caps_analysis_report_{weight_type}.txt",
         )
 
         # Save detailed results
         if len(correlation_df) > 0:
             correlation_df.to_csv(
-                f"character_caps_correlations_{weight_type}.tsv", sep="\t", index=False
+                output_dir / f"character_caps_correlations_{weight_type}.tsv",
+                sep="\t",
+                index=False,
             )
             print(
                 f"Character correlation results ({weight_type}) saved to: "
-                f"character_caps_correlations_{weight_type}.tsv"
+                f"{output_dir / f'character_caps_correlations_{weight_type}.tsv'}"
             )
 
         if len(lme_results) > 0:
             lme_results.to_csv(
-                f"character_caps_lme_results_{weight_type}.tsv", sep="\t", index=False
+                output_dir / f"character_caps_lme_results_{weight_type}.tsv",
+                sep="\t",
+                index=False,
             )
             print(
                 f"Character LME results ({weight_type}) saved to: "
-                f"character_caps_lme_results_{weight_type}.tsv"
+                f"{output_dir / f'character_caps_lme_results_{weight_type}.tsv'}"
             )
 
         if len(transition_results) > 0:
             transition_results.to_csv(
-                f"character_caps_transition_results_{weight_type}.tsv",
+                output_dir / f"character_caps_transition_results_{weight_type}.tsv",
                 sep="\t",
                 index=False,
             )
             print(
                 f"Character transition results ({weight_type}) saved to: "
-                f"character_caps_transition_results_{weight_type}.tsv"
+                f"{output_dir / f'character_caps_transition_results_{weight_type}.tsv'}"
             )
 
         all_results[weight_type] = {

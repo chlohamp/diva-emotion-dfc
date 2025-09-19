@@ -411,7 +411,7 @@ def plot_cap_metrics(metrics_df, save_path=None):
     plt.close()
 
 
-def save_cap_metrics(metrics_df, output_dir="caps_results"):
+def save_cap_metrics(metrics_df, output_dir="derivatives/caps/cap-analysis"):
     """Save CAP metrics to file."""
     print(f"Saving CAP metrics to {output_dir}/...")
 
@@ -431,7 +431,13 @@ def save_cap_metrics(metrics_df, output_dir="caps_results"):
     print(f"  - {output_dir}/cap_metrics_summary.tsv")
 
 
-def save_results(df, cluster_labels, caps, atlas_labels, output_dir="caps_results"):
+def save_results(
+    df,
+    cluster_labels,
+    caps,
+    atlas_labels,
+    output_dir="derivatives/caps/cap-analysis",
+):
     """Save results to files."""
     print(f"Saving results to {output_dir}/...")
 
@@ -468,7 +474,7 @@ def save_results(df, cluster_labels, caps, atlas_labels, output_dir="caps_result
     print(f"  - {output_dir}/cluster_statistics.tsv")
 
 
-def run_cap_statistical_tests(metrics_df, output_dir="caps_results"):
+def run_cap_statistical_tests(metrics_df, output_dir="derivatives/caps/cap-analysis"):
     """Run statistical tests including ANOVA on CAP metrics."""
     print("Running statistical tests on CAP metrics...")
 
@@ -746,9 +752,15 @@ def main_subject_level():
     # Using Bubbles subject data for Stranger Things task
     subject_id = "sub-Bubbles_ses-01"
     bold_files = [
-        "sub_Bubbles_ses-01_task-stranger_run-01_space-scan_desc-optcomDenoised_bold.nii.gz",
+        (
+            "derivatives/simulated/"
+            "sub_Bubbles_ses-01_task-stranger_run-01_space-scan_desc-optcomDenoised_bold.nii.gz"
+        ),
         # Add more runs here if available, e.g.:
-        # "sub_Bubbles_ses-01_task-stranger_run-02_space-scan_desc-optcomDenoised_bold.nii.gz",
+        # (
+        #     "derivatives/simulated/"
+        #     "sub_Bubbles_ses-01_task-stranger_run-02_space-scan_desc-optcomDenoised_bold.nii.gz"
+        # ),
     ]
 
     # Check which files exist
@@ -801,7 +813,8 @@ def main_subject_level():
         cluster_range, inertias = plot_elbow_curve(
             concatenated_for_elbow,
             max_clusters=15,
-            save_path="subject_elbow_plot.png",
+            save_path=Path("derivatives/caps/cap-analysis/figures")
+            / "subject_elbow_plot.png",
         )
 
         # Get suggested optimal k
@@ -870,21 +883,31 @@ def main_subject_level():
     try:
         print("\nStep 2: Generating visualization plots...")
 
+        # Create figures directory
+        figures_dir = Path("derivatives/caps/cap-analysis/figures")
+        figures_dir.mkdir(parents=True, exist_ok=True)
+
         # Create concatenated DataFrame for plotting
         concatenated_df = pd.DataFrame(concatenated_timeseries, columns=atlas_labels)
 
-        plot_caps(caps, atlas_labels, save_path="subject_caps_patterns.png")
+        plot_caps(
+            caps, atlas_labels, save_path=figures_dir / "subject_caps_patterns.png"
+        )
         plot_timeseries_with_clusters(
             concatenated_df,
             cluster_labels,
-            save_path="subject_timeseries_clusters.png",
+            save_path=figures_dir / "subject_timeseries_clusters.png",
         )
 
         # Plot subject-level metrics
-        plot_cap_metrics(subject_metrics_df, save_path="subject_cap_metrics.png")
+        plot_cap_metrics(
+            subject_metrics_df, save_path=figures_dir / "subject_cap_metrics.png"
+        )
 
         # Plot run-level metrics (using same CAPs)
-        plot_cap_metrics(run_metrics_df, save_path="run_cap_metrics_same_caps.png")
+        plot_cap_metrics(
+            run_metrics_df, save_path=figures_dir / "run_cap_metrics_same_caps.png"
+        )
 
     except Exception as e:
         print(f"Error in plotting: {e}")
@@ -895,7 +918,7 @@ def main_subject_level():
         print("\nStep 3: Saving results...")
 
         # Save subject-level results
-        output_dir = f"caps_results_{subject_id.replace('-', '_')}"
+        output_dir = f"derivatives/caps/cap-analysis/{subject_id.replace('-', '_')}"
         save_results(concatenated_df, cluster_labels, caps, atlas_labels, output_dir)
 
         # Save subject-level metrics
@@ -942,6 +965,7 @@ def main():
 
     # File path for Bubbles subject
     bold_file = (
+        "derivatives/simulated/"
         "sub_Bubbles_ses-01_task-stranger_run-01_space-scan_"
         "desc-optcomDenoised_bold.nii.gz"
     )
