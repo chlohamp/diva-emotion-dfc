@@ -1,0 +1,15 @@
+onset	duration	nouns	verbs	valence	arousal	characters
+3.0	1.5	bicycle	dance	7	1	Nancy
+4.5	1.5	leaf	jump	6	2	Nancy
+6.0	1.5	car	write	7	7	Eleven
+7.5	1.5	leaf	jump	3	2	Nancy
+9.0	1.5	ocean	fly	5	1	Mike Wheeler
+10.5	1.5	bicycle	sing	3	7	Eleven
+12.0	1.5	bird	study	7	1	Eleven
+13.5	1.5	book	jump	2	2	Nancy
+15.0	1.5	river	ride	4	4	Mike Wheeler
+16.5	1.5	cat	play	3	7	Eleven
+18.0	1.5	flower	run	4	6	Nancy
+19.5	1.5	flower	study	2	5	Eleven
+21.0	1.5	tree	write	7	1	Nancy
+22.5	1.5	bicycle	swim	2	1	Eleven

@@ -1,0 +1,13 @@
+cap	character	metric	r	p_value	significant	effect_size	n
+CAP_1	Mike Wheeler	avg_dwell_time	-0.14484136487558033	0.36009181827903314	False	small	42
+CAP_1	Eleven	avg_dwell_time	-0.10050378152592124	0.5265448709138973	False	small	42
+CAP_1	Nancy	avg_dwell_time	0.17407765595569785	0.2702224762962666	False	small	42
+CAP_2	Mike Wheeler	avg_dwell_time	0.3202563076101744	0.0386708974922175	True	medium	42
+CAP_2	Eleven	avg_dwell_time	-0.16666666666666669	0.2914585312460318	False	small	42
+CAP_2	Nancy	avg_dwell_time	1.8598587621714236e-18	0.9999999999999996	False	negligible	42
+CAP_3	Mike Wheeler	avg_dwell_time	-0.20672455764868083	0.18900165518593287	False	small	42
+CAP_3	Eleven	avg_dwell_time	0.2581988897471611	0.09874884524776348	False	small	42
+CAP_3	Nancy	avg_dwell_time	-0.14907119849998599	0.34608235107103613	False	small	42
+CAP_4	Mike Wheeler	avg_dwell_time			False	large	42
+CAP_4	Eleven	avg_dwell_time			False	large	42
+CAP_4	Nancy	avg_dwell_time			False	large	42
