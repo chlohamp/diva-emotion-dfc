@@ -1,0 +1,56 @@
+CAP-EMOTION CORRELATION ANALYSIS REPORT
+========================================
+
+METHODOLOGY
+-----------
+Analysis: Spearman rank correlation coefficient
+Purpose: Assess covariation between CAPs and emotion during runs
+Significance threshold: p < 0.05
+Following: Spearman (1904) methodology
+
+CORRELATION RESULTS
+------------------
+Total correlations computed: 32
+Significant correlations: 0
+Significance rate: 0.0%
+
+ALL CORRELATIONS:
+  CAP_1_positive - valence: r = -0.0717, p = 0.3128
+  CAP_1_positive - arousal: r = 0.1223, p = 0.0846
+  CAP_1_negative - valence: r = -0.0634, p = 0.3722
+  CAP_1_negative - arousal: r = -0.0320, p = 0.6528
+  CAP_2_positive - valence: r = -0.1048, p = 0.1397
+  CAP_2_positive - arousal: r = 0.0994, p = 0.1616
+  CAP_2_negative - valence: r = -0.0800, p = 0.2602
+  CAP_2_negative - arousal: r = -0.0871, p = 0.2201
+  CAP_3_positive - valence: r = 0.0957, p = 0.1777
+  CAP_3_positive - arousal: r = -0.0512, p = 0.4714
+  CAP_3_negative - valence: r = 0.0270, p = 0.7041
+  CAP_3_negative - arousal: r = 0.0639, p = 0.3687
+  CAP_4_positive - valence: r = 0.0075, p = 0.9156
+  CAP_4_positive - arousal: r = 0.1047, p = 0.1401
+  CAP_4_negative - valence: r = -0.0529, p = 0.4567
+  CAP_4_negative - arousal: r = 0.0523, p = 0.4621
+  CAP_5_positive - valence: r = 0.1002, p = 0.1581
+  CAP_5_positive - arousal: r = 0.0120, p = 0.8663
+  CAP_5_negative - valence: r = -0.0400, p = 0.5738
+  CAP_5_negative - arousal: r = -0.1374, p = 0.0523
+  CAP_6_positive - valence: r = -0.0574, p = 0.4193
+  CAP_6_positive - arousal: r = 0.0764, p = 0.2821
+  CAP_6_negative - valence: r = -0.0197, p = 0.7821
+  CAP_6_negative - arousal: r = 0.1030, p = 0.1465
+  CAP_7_positive - valence: r = 0.0727, p = 0.3063
+  CAP_7_positive - arousal: r = 0.0079, p = 0.9115
+  CAP_7_negative - valence: r = 0.0842, p = 0.2357
+  CAP_7_negative - arousal: r = -0.0082, p = 0.9083
+  CAP_8_positive - valence: r = 0.0817, p = 0.2503
+  CAP_8_positive - arousal: r = -0.0142, p = 0.8414
+  CAP_8_negative - valence: r = 0.0927, p = 0.1919
+  CAP_8_negative - arousal: r = -0.1143, p = 0.1072
+
+EMOTION COVARIATION PATTERNS
+---------------------------
+Overall assessment: Mixed patterns - further examination recommended
+
+* p < 0.05
+Analysis completed following study methodology.
