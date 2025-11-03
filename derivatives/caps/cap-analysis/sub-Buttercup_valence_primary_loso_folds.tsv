@@ -1,0 +1,5 @@
+participant_id	session	emotion	rmse	r2	ar1_detected	n_test
+sub-Buttercup	1	valence	0.9404390587766004	0.11557437672738191	False	60
+sub-Buttercup	2	valence	0.9311669558301384	0.13292810037003322	False	60
+sub-Buttercup	3	valence	0.9533784839495142	0.09106946634212587	False	60
+sub-Buttercup	4	valence	1.032269481201665	-0.06558028182035458	True	60

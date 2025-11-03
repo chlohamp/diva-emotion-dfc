@@ -1,0 +1,3 @@
+participant_id	session	emotion	rmse	r2	ar1_detected	n_test
+sub-Blossom	1	valence	0.9429256338300362	0.1108912490662245	True	120
+sub-Blossom	2	valence	0.9258941314150361	0.14272005741119587	False	120
