@@ -1,4 +1,5 @@
 run	n_clips	n_valence_raters	n_arousal_raters	valence_icc	valence_pval	valence_reliability	valence_suitable_for_averaging	arousal_icc	arousal_pval	arousal_reliability	arousal_suitable_for_averaging	valence_arousal_correlation	valence_arousal_corr_pval	run_recommendation	emotions_for_averaging
+S01E01R01-test	29	2	2	-1.1102230246251565e-16	0.5000000000000007	Poor	False	0.0	0.5000000000000001	Poor	False	NA	NA	DON'T AVERAGE	none
 S01E01R01	334	2	2	-1.1102230246251563e-16	0.5000000000000724	Poor	False	0.18194532949005793	0.0004229387000654191	Poor	False	NA	NA	DON'T AVERAGE	none
 S01E01R02	276	2	2	5.551115123125783e-17	0.5000000000001236	Poor	False	0.0	0.5000000000001243	Poor	False	NA	NA	DON'T AVERAGE	none
 S01E01R03	275	2	2	0.0	0.5000000000000534	Poor	False	2.220446049250314e-16	0.500000000000051	Poor	False	NA	NA	DON'T AVERAGE	none
