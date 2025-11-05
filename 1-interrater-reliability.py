@@ -146,61 +146,143 @@ def assess_emotional_dynamics(valence_ts, arousal_ts, onset_times):
     return assessment
 
 
-def calculate_icc(rater_a1_data, rater_a2_data):
-    """Calculate ICC(2,1) for valence and arousal ratings."""
-
-    n_trials = len(rater_a1_data)
-
-    # Prepare data for ICC calculation - long format
-    # Valence data
-    valence_data = pd.DataFrame(
-        {
-            "subject": list(range(n_trials)) * 2,
-            "rater": ["A1"] * n_trials + ["A2"] * n_trials,
-            "valence": (
-                list(rater_a1_data["valence"]) + list(rater_a2_data["valence"])
-            ),
-        }
-    )
-
-    # Arousal data
-    arousal_data = pd.DataFrame(
-        {
-            "subject": list(range(n_trials)) * 2,
-            "rater": ["A1"] * n_trials + ["A2"] * n_trials,
-            "arousal": (
-                list(rater_a1_data["arousal"]) + list(rater_a2_data["arousal"])
-            ),
-        }
-    )
-
+def calculate_icc_multi_rater(data, valence_cols, arousal_cols):
+    """Calculate ICC(2,1) for valence and arousal ratings with multiple raters."""
+    
+    n_trials = len(data)
+    n_val_raters = len(valence_cols)
+    n_aro_raters = len(arousal_cols)
+    
+    # Prepare valence data for ICC calculation - long format
+    # First collect all valence data per rater for standardization
+    valence_by_rater = {}
+    for i, col in enumerate(valence_cols):
+        rater_vals = []
+        for trial in range(n_trials):
+            val = data[col].iloc[trial]
+            try:
+                val_numeric = pd.to_numeric(val, errors='coerce')
+                if pd.notna(val_numeric):
+                    rater_vals.append(val_numeric)
+            except:
+                continue
+        valence_by_rater[f"R{i+1}"] = rater_vals
+    
+    # Apply standardization: center around 4, then z-score each rater
+    valence_data_list = []
+    for rater_id, vals in valence_by_rater.items():
+        if len(vals) > 0:
+            # Center valence around 4 (neutral point on 1-7 scale)
+            centered_vals = np.array(vals) - 4
+            # Z-score to standardize scale usage
+            if np.std(centered_vals) > 0:
+                standardized_vals = (centered_vals - np.mean(centered_vals)) / np.std(centered_vals)
+            else:
+                standardized_vals = centered_vals  # Keep as-is if no variance
+            
+            # Add to data list
+            for trial_idx, std_val in enumerate(standardized_vals):
+                valence_data_list.append({
+                    "subject": trial_idx,
+                    "rater": rater_id,
+                    "valence": std_val
+                })
+    
+    valence_data = pd.DataFrame(valence_data_list)
+    
+    # Prepare arousal data for ICC calculation - long format
+    # First collect all arousal data per rater for standardization
+    arousal_by_rater = {}
+    for i, col in enumerate(arousal_cols):
+        rater_vals = []
+        for trial in range(n_trials):
+            val = data[col].iloc[trial]
+            try:
+                val_numeric = pd.to_numeric(val, errors='coerce')
+                if pd.notna(val_numeric):
+                    rater_vals.append(val_numeric)
+            except:
+                continue
+        arousal_by_rater[f"R{i+1}"] = rater_vals
+    
+    # Apply standardization: z-score each rater's arousal ratings
+    arousal_data_list = []
+    for rater_id, vals in arousal_by_rater.items():
+        if len(vals) > 0:
+            # Z-score to standardize scale usage
+            vals_array = np.array(vals)
+            if np.std(vals_array) > 0:
+                standardized_vals = (vals_array - np.mean(vals_array)) / np.std(vals_array)
+            else:
+                standardized_vals = vals_array - np.mean(vals_array)  # Center if no variance
+            
+            # Add to data list
+            for trial_idx, std_val in enumerate(standardized_vals):
+                arousal_data_list.append({
+                    "subject": trial_idx,
+                    "rater": rater_id,
+                    "arousal": std_val
+                })
+    
+    arousal_data = pd.DataFrame(arousal_data_list)
+    
     # Calculate ICC(2,1) for valence
-    icc_valence = pg.intraclass_corr(
-        data=valence_data, targets="subject", raters="rater", ratings="valence"
-    )
+    try:
+        # Check for sufficient data and variance
+        if len(valence_data) == 0:
+            print("Error calculating valence ICC: No valid data")
+            val_icc, val_pval, val_ci = np.nan, np.nan, [np.nan, np.nan]
+        elif valence_data['valence'].nunique() <= 1:
+            print("Error calculating valence ICC: Zero variance in ratings (all raters gave same scores)")
+            val_icc, val_pval, val_ci = np.nan, np.nan, [np.nan, np.nan]
+        elif len(valence_data.groupby('subject')) < 2:
+            print("Error calculating valence ICC: Insufficient subjects with complete data")
+            val_icc, val_pval, val_ci = np.nan, np.nan, [np.nan, np.nan]
+        else:
+            icc_valence = pg.intraclass_corr(
+                data=valence_data, targets="subject", raters="rater", ratings="valence"
+            )
+            # Extract ICC(2,1) values - ICC2 with single rater
+            icc2_valence = icc_valence[icc_valence["Type"] == "ICC2"]
+            val_row = icc2_valence[icc2_valence["Description"].str.contains("Single")]
+            val_icc = val_row["ICC"].iloc[0]
+            val_pval = val_row["pval"].iloc[0]
+            val_ci = val_row["CI95%"].iloc[0]
+    except Exception as e:
+        print(f"Error calculating valence ICC: {e}")
+        val_icc = np.nan
+        val_pval = np.nan
+        val_ci = [np.nan, np.nan]
 
     # Calculate ICC(2,1) for arousal
-    icc_arousal = pg.intraclass_corr(
-        data=arousal_data, targets="subject", raters="rater", ratings="arousal"
-    )
+    try:
+        # Check for sufficient data and variance
+        if len(arousal_data) == 0:
+            print("Error calculating arousal ICC: No valid data")
+            aro_icc, aro_pval, aro_ci = np.nan, np.nan, [np.nan, np.nan]
+        elif arousal_data['arousal'].nunique() <= 1:
+            print("Error calculating arousal ICC: Zero variance in ratings (all raters gave same scores)")
+            aro_icc, aro_pval, aro_ci = np.nan, np.nan, [np.nan, np.nan]
+        elif len(arousal_data.groupby('subject')) < 2:
+            print("Error calculating arousal ICC: Insufficient subjects with complete data")
+            aro_icc, aro_pval, aro_ci = np.nan, np.nan, [np.nan, np.nan]
+        else:
+            icc_arousal = pg.intraclass_corr(
+                data=arousal_data, targets="subject", raters="rater", ratings="arousal"
+            )
+            # Extract ICC(2,1) values - ICC2 with single rater
+            icc2_arousal = icc_arousal[icc_arousal["Type"] == "ICC2"]
+            aro_row = icc2_arousal[icc2_arousal["Description"].str.contains("Single")]
+            aro_icc = aro_row["ICC"].iloc[0]
+            aro_pval = aro_row["pval"].iloc[0]
+            aro_ci = aro_row["CI95%"].iloc[0]
+    except Exception as e:
+        print(f"Error calculating arousal ICC: {e}")
+        aro_icc = np.nan
+        aro_pval = np.nan
+        aro_ci = [np.nan, np.nan]
 
-    # Extract ICC(2,1) values - ICC2 with single rater
-    icc2_valence = icc_valence[icc_valence["Type"] == "ICC2"]
-    icc2_arousal = icc_arousal[icc_arousal["Type"] == "ICC2"]
-
-    # Get single rater ICC values and p-values - ICC2 single random raters
-    val_row = icc2_valence[icc2_valence["Description"].str.contains("Single")]
-    aro_row = icc2_arousal[icc2_arousal["Description"].str.contains("Single")]
-
-    val_icc = val_row["ICC"].iloc[0]
-    val_pval = val_row["pval"].iloc[0]
-    val_ci = val_row["CI95%"].iloc[0]
-
-    aro_icc = aro_row["ICC"].iloc[0]
-    aro_pval = aro_row["pval"].iloc[0]
-    aro_ci = aro_row["CI95%"].iloc[0]
-
-    return val_icc, val_pval, val_ci, aro_icc, aro_pval, aro_ci
+    return val_icc, val_pval, val_ci, aro_icc, aro_pval, aro_ci, n_val_raters, n_aro_raters
 
 
 def detect_outlier_timepoints(rater_a1_data, rater_a2_data):
@@ -300,173 +382,295 @@ def calculate_agreement_metrics(rater_a1_data, rater_a2_data):
     return metrics
 
 
+def load_combined_annotation_files():
+    """Load all combined annotation CSV files."""
+    annotation_dir = Path("derivatives/annotations")
+    annotation_files = list(annotation_dir.glob("S*.csv"))
+    
+    if not annotation_files:
+        print("No combined annotation files found in derivatives/annotations/")
+        return []
+    
+    return sorted(annotation_files)
+
+
+def create_aggregated_time_series_multi_rater(data, valence_cols, arousal_cols, valence_reliable, arousal_reliable):
+    """
+    Create aggregated emotion time series for reliable runs with multiple raters.
+    Z-score and average ratings across all available raters for reliable emotions.
+    """
+    results = {}
+    
+    if valence_reliable and len(valence_cols) >= 2:
+        # Z-score valence ratings for each rater and average
+        val_z_scores = []
+        for col in valence_cols:
+            if not data[col].isna().all():  # Skip columns that are all NaN
+                val_z = stats.zscore(data[col].dropna())
+                # Pad with NaN if needed to match original length
+                if len(val_z) < len(data):
+                    val_full = np.full(len(data), np.nan)
+                    val_full[~data[col].isna()] = val_z
+                    val_z_scores.append(val_full)
+                else:
+                    val_z_scores.append(val_z)
+        
+        if val_z_scores:
+            # Average z-scored ratings across raters (ignoring NaN)
+            valence_aggregated = np.nanmean(val_z_scores, axis=0)
+            results['valence_timeseries'] = valence_aggregated
+            print(f"✓ Created aggregated valence time series (z-scored and averaged across {len(valence_cols)} raters)")
+        else:
+            results['valence_timeseries'] = None
+            print("✗ Valence reliable but no valid data - no aggregated time series created")
+    else:
+        results['valence_timeseries'] = None
+        print("✗ Valence not reliable - no aggregated time series created")
+    
+    if arousal_reliable and len(arousal_cols) >= 2:
+        # Z-score arousal ratings for each rater and average
+        aro_z_scores = []
+        for col in arousal_cols:
+            if not data[col].isna().all():  # Skip columns that are all NaN
+                aro_z = stats.zscore(data[col].dropna())
+                # Pad with NaN if needed to match original length
+                if len(aro_z) < len(data):
+                    aro_full = np.full(len(data), np.nan)
+                    aro_full[~data[col].isna()] = aro_z
+                    aro_z_scores.append(aro_full)
+                else:
+                    aro_z_scores.append(aro_z)
+        
+        if aro_z_scores:
+            # Average z-scored ratings across raters (ignoring NaN)
+            arousal_aggregated = np.nanmean(aro_z_scores, axis=0)
+            results['arousal_timeseries'] = arousal_aggregated
+            print(f"✓ Created aggregated arousal time series (z-scored and averaged across {len(arousal_cols)} raters)")
+        else:
+            results['arousal_timeseries'] = None
+            print("✗ Arousal reliable but no valid data - no aggregated time series created")
+    else:
+        results['arousal_timeseries'] = None
+        print("✗ Arousal not reliable - no aggregated time series created")
+    
+    return results
+
+
+def process_single_run(csv_file):
+    """Process a single combined annotation CSV file for IRR."""
+    print(f"\nProcessing: {csv_file.name}")
+    print("-" * 50)
+    
+    try:
+        data = pd.read_csv(csv_file)
+        print(f"Loaded {len(data)} timepoints")
+        
+        # Check if we have at least 2 raters for both valence and arousal
+        valence_cols = [col for col in data.columns if col.startswith('valence_')]
+        arousal_cols = [col for col in data.columns if col.startswith('arousal_')]
+        
+        if len(valence_cols) < 2 and len(arousal_cols) < 2:
+            print(f"⚠️  Insufficient raters: {len(valence_cols)} valence, {len(arousal_cols)} arousal raters")
+            print("Need at least 2 raters for one emotion dimension")
+            return None
+        
+        print(f"Found {len(valence_cols)} valence raters, {len(arousal_cols)} arousal raters")
+        
+        return {
+            'run_name': csv_file.stem,
+            'data': data,
+            'valence_cols': valence_cols,
+            'arousal_cols': arousal_cols,
+            'n_timepoints': len(data),
+            'n_valence_raters': len(valence_cols),
+            'n_arousal_raters': len(arousal_cols)
+        }
+        
+    except Exception as e:
+        print(f"Error processing {csv_file.name}: {e}")
+        return None
+
+
 def main():
-    print("Inter-rater Reliability Analysis")
-    print("=" * 40)
+    print("Inter-rater Reliability Analysis for Combined Annotations")
+    print("=" * 60)
     print("Following Shrout & Fleiss (1979) ICC(2,1) methodology")
     print("Significance threshold: p < 0.05")
     print()
 
-    # Load the two rater files
-    try:
-        rater_a1_file = (
-            "derivatives/simulated/ses-01_task-strangerthings_acq-A1_run-1_events.tsv"
-        )
-        rater_a2_file = (
-            "derivatives/simulated/ses-01_task-strangerthings_acq-A2_run-1_events.tsv"
-        )
-
-        rater_a1_data = pd.read_csv(rater_a1_file, sep="\t")
-        rater_a2_data = pd.read_csv(rater_a2_file, sep="\t")
-
-        print(f"Loaded {rater_a1_file}: {len(rater_a1_data)} trials")
-        print(f"Loaded {rater_a2_file}: {len(rater_a2_data)} trials")
-
-    except FileNotFoundError as e:
-        print(f"Error: Could not find one of the rater files: {e}")
-        return
-
-    # Check that both files have the same number of trials
-    if len(rater_a1_data) != len(rater_a2_data):
-        print("Error: Rater files have different numbers of trials!")
-        return
-
-    print(f"\nAnalyzing {len(rater_a1_data)} TR-length clips for reliability...")
-
-    # STEP 1: Calculate ICC(2,1) for absolute agreement
-    print("\nSTEP 1: Calculating ICC(2,1) for absolute agreement...")
-    print("-" * 50)
-    try:
-        icc_results = calculate_icc(rater_a1_data, rater_a2_data)
-        valence_icc, valence_pval, valence_ci = icc_results[0:3]
-        arousal_icc, arousal_pval, arousal_ci = icc_results[3:6]
-    except Exception as e:
-        print(f"Error calculating ICC: {e}")
-        return
-
-    # Determine reliability (p < 0.05)
-    alpha = 0.05
-    valence_reliable = valence_pval < alpha
-    arousal_reliable = arousal_pval < alpha
-
-    print(f"Valence ICC(2,1): {valence_icc:.4f} (p = {valence_pval:.4f})")
-    if valence_reliable:
-        print("  ✓ SIGNIFICANT RELIABILITY - proceed with aggregation")
-    else:
-        print("  ✗ NOT RELIABLE - exclude from further analysis")
-    
-    print(f"Arousal ICC(2,1): {arousal_icc:.4f} (p = {arousal_pval:.4f})")
-    if arousal_reliable:
-        print("  ✓ SIGNIFICANT RELIABILITY - proceed with aggregation")
-    else:
-        print("  ✗ NOT RELIABLE - exclude from further analysis")
-
-    # STEP 2: Create aggregated time series for reliable emotions
-    print("\nSTEP 2: Creating aggregated emotion time series...")
-    print("-" * 50)
-    
-    if not (valence_reliable or arousal_reliable):
-        print("❌ NO RELIABLE EMOTIONS - RUN SHOULD BE EXCLUDED")
-        print("Recommendation: This run lacks sufficient inter-rater reliability")
-        print("for both valence and arousal and should be excluded from analysis.")
+    # Load all combined annotation files
+    annotation_files = load_combined_annotation_files()
+    if not annotation_files:
+        print("No annotation files found to process.")
         return
     
-    aggregated_series = create_aggregated_time_series(
-        rater_a1_data, rater_a2_data, valence_reliable, arousal_reliable
-    )
-
-    # STEP 3: Compute Spearman correlation between valence and arousal
-    print("\nSTEP 3: Computing valence-arousal correlation...")
-    print("-" * 50)
+    print(f"Found {len(annotation_files)} combined annotation files to process")
     
-    correlation, corr_pvalue, interpretation = compute_valence_arousal_correlation(
-        aggregated_series['valence_timeseries'], 
-        aggregated_series['arousal_timeseries']
-    )
+    # Process each file and collect results
+    all_results = []
     
-    if correlation is not None:
-        print(f"Spearman correlation: r = {correlation:.4f} (p = {corr_pvalue:.4f})")
-        print(f"Interpretation: {interpretation}")
+    for csv_file in annotation_files:
+        run_data = process_single_run(csv_file)
+        if run_data is None:
+            continue
         
-        if corr_pvalue < 0.05:
-            print("  ✓ Statistically significant covariation detected")
+        run_name = run_data['run_name']
+        data = run_data['data']
+        valence_cols = run_data['valence_cols']
+        arousal_cols = run_data['arousal_cols']
+        
+        print(f"\nAnalyzing {run_data['n_timepoints']} timepoints for reliability...")
+
+        # STEP 1: Calculate ICC(2,1) for absolute agreement
+        print("\nSTEP 1: Calculating ICC(2,1) for absolute agreement...")
+        try:
+            icc_results = calculate_icc_multi_rater(data, valence_cols, arousal_cols)
+            valence_icc, valence_pval, valence_ci, arousal_icc, arousal_pval, arousal_ci, n_val_raters, n_aro_raters = icc_results
+        except Exception as e:
+            print(f"Error calculating ICC: {e}")
+            continue
+
+        # Determine reliability based on ICC thresholds for averaging
+        alpha = 0.05
+        
+        # ICC interpretation for averaging purposes
+        def interpret_icc_for_averaging(icc_val, p_val):
+            if pd.isna(icc_val) or pd.isna(p_val):
+                return "Cannot assess", "NA - data issues"
+            elif p_val >= alpha:
+                return "Poor", "Not significant - don't average"
+            elif icc_val >= 0.75:
+                return "Excellent", "Definitely average"
+            elif icc_val >= 0.60:
+                return "Good", "Safe to average"
+            elif icc_val >= 0.40:
+                return "Fair", "Use caution - averaging questionable"
+            else:
+                return "Poor", "Don't average"
+        
+        val_reliability, val_recommendation = interpret_icc_for_averaging(valence_icc, valence_pval)
+        aro_reliability, aro_recommendation = interpret_icc_for_averaging(arousal_icc, arousal_pval)
+        
+        # Simple binary for downstream analysis
+        valence_suitable_for_averaging = val_reliability in ["Excellent", "Good"] 
+        arousal_suitable_for_averaging = aro_reliability in ["Excellent", "Good"]
+
+        print(f"Valence ICC(2,1): {valence_icc:.4f} (p = {valence_pval:.4f}) [{n_val_raters} raters]")
+        print(f"  Reliability: {val_reliability} - {val_recommendation}")
+        
+        print(f"Arousal ICC(2,1): {arousal_icc:.4f} (p = {arousal_pval:.4f}) [{n_aro_raters} raters]")
+        print(f"  Reliability: {aro_reliability} - {aro_recommendation}")
+
+        # Overall recommendation for this run
+        if valence_suitable_for_averaging and arousal_suitable_for_averaging:
+            run_recommendation = "AVERAGE BOTH EMOTIONS"
+            reason = "Both valence and arousal have good/excellent reliability"
+        elif valence_suitable_for_averaging:
+            run_recommendation = "AVERAGE VALENCE ONLY"
+            reason = "Only valence has sufficient reliability for averaging"
+        elif arousal_suitable_for_averaging:
+            run_recommendation = "AVERAGE AROUSAL ONLY"
+            reason = "Only arousal has sufficient reliability for averaging"
         else:
-            print("  - No significant covariation between valence and arousal")
-    else:
-        print("Cannot compute correlation - insufficient reliable data")
+            run_recommendation = "DON'T AVERAGE"
+            reason = "Neither emotion dimension has sufficient reliability"
 
-    # STEP 4: Assess emotional dynamics and identify atypical patterns
-    print("\nSTEP 4: Assessing emotional dynamics...")
-    print("-" * 50)
-    
-    onset_times = rater_a1_data.get('onset', range(len(rater_a1_data)))
-    dynamics_assessment = assess_emotional_dynamics(
-        aggregated_series['valence_timeseries'],
-        aggregated_series['arousal_timeseries'],
-        onset_times
-    )
-    
-    print(f"Overall assessment: {dynamics_assessment['overall_assessment']}")
-    
-    if dynamics_assessment['concern_flags']:
-        print("\nConcerns detected:")
-        for concern in dynamics_assessment['concern_flags']:
-            print(f"  ⚠️  {concern}")
-    else:
-        print("✓ No concerning patterns detected")
-    
-    # STEP 5: Final recommendation
-    print("\nSTEP 5: Final recommendation...")
-    print("=" * 50)
-    
-    reliable_emotions = []
-    if valence_reliable:
-        reliable_emotions.append("valence")
-    if arousal_reliable:
-        reliable_emotions.append("arousal")
-    
-    if dynamics_assessment['exclusion_recommended']:
-        final_recommendation = "EXCLUDE RUN"
-        reason = "Atypical emotional dynamics detected"
-    elif not reliable_emotions:
-        final_recommendation = "EXCLUDE RUN"
-        reason = "No reliable emotion ratings"
-    elif len(reliable_emotions) == 1:
-        final_recommendation = "PROCEED WITH CAUTION"
-        reason = f"Only {reliable_emotions[0]} ratings are reliable"
-    else:
-        final_recommendation = "PROCEED WITH ANALYSIS"
-        reason = "Both emotion dimensions show adequate reliability"
-    
-    print(f"RECOMMENDATION: {final_recommendation}")
-    print(f"Reason: {reason}")
-    
-    if reliable_emotions:
-        print(f"Reliable emotions for analysis: {', '.join(reliable_emotions)}")
+        print(f"\nRUN RECOMMENDATION: {run_recommendation}")
+        print(f"Reason: {reason}")
 
-    # Save detailed results
-    print("\nSaving results...")
-    print("-" * 30)
-    
-    # Prepare comprehensive results
-    results = {
-        "run": ["run-1"],
-        "n_clips": [len(rater_a1_data)],
-        "valence_icc": [valence_icc],
-        "valence_pval": [valence_pval],
-        "valence_reliable": [valence_reliable],
-        "arousal_icc": [arousal_icc],
-        "arousal_pval": [arousal_pval],
-        "arousal_reliable": [arousal_reliable],
-        "valence_arousal_correlation": [correlation if correlation is not None else np.nan],
-        "valence_arousal_corr_pval": [corr_pvalue if corr_pvalue is not None else np.nan],
-        "n_concerns": [len(dynamics_assessment['concern_flags'])],
-        "exclusion_recommended": [dynamics_assessment['exclusion_recommended']],
-        "final_recommendation": [final_recommendation],
-        "reliable_emotions": [', '.join(reliable_emotions) if reliable_emotions else 'none']
-    }
+        # STEP 2: Create aggregated time series for suitable emotions
+        print("\nSTEP 2: Creating aggregated emotion time series...")
+        
+        if not (valence_suitable_for_averaging or arousal_suitable_for_averaging):
+            print("❌ NO SUITABLE EMOTIONS FOR AVERAGING")
+            correlation = np.nan
+            corr_pvalue = np.nan
+            n_concerns = 0
+            exclusion_recommended = True
+        else:
+            aggregated_series = create_aggregated_time_series_multi_rater(
+                data, valence_cols, arousal_cols, valence_suitable_for_averaging, arousal_suitable_for_averaging
+            )
 
-    results_df = pd.DataFrame(results)
+            # STEP 3: Compute Spearman correlation between valence and arousal
+            print("\nSTEP 3: Computing valence-arousal correlation...")
+            
+            correlation, corr_pvalue, interpretation = compute_valence_arousal_correlation(
+                aggregated_series['valence_timeseries'], 
+                aggregated_series['arousal_timeseries']
+            )
+            
+            if correlation is not None:
+                print(f"Spearman correlation: r = {correlation:.4f} (p = {corr_pvalue:.4f})")
+                print(f"Interpretation: {interpretation}")
+                
+                if corr_pvalue < 0.05:
+                    print("  ✓ Statistically significant covariation detected")
+                else:
+                    print("  - No significant covariation between valence and arousal")
+            else:
+                print("Cannot compute correlation - insufficient reliable data")
+
+            # STEP 4: Assess emotional dynamics and identify atypical patterns
+            print("\nSTEP 4: Assessing emotional dynamics...")
+            
+            onset_times = range(len(data))  # Use index as onset times
+            dynamics_assessment = assess_emotional_dynamics(
+                aggregated_series['valence_timeseries'],
+                aggregated_series['arousal_timeseries'],
+                onset_times
+            )
+            
+            print(f"Overall assessment: {dynamics_assessment['overall_assessment']}")
+            
+            if dynamics_assessment['concern_flags']:
+                print("\nConcerns detected:")
+                for concern in dynamics_assessment['concern_flags']:
+                    print(f"  ⚠️  {concern}")
+            else:
+                print("✓ No concerning patterns detected")
+            
+            n_concerns = len(dynamics_assessment['concern_flags'])
+            exclusion_recommended = dynamics_assessment['exclusion_recommended']
+
+        # Collect results for this run
+        emotions_for_averaging = []
+        if valence_suitable_for_averaging:
+            emotions_for_averaging.append("valence")
+        if arousal_suitable_for_averaging:
+            emotions_for_averaging.append("arousal")
+
+        run_results = {
+            "run": run_name,
+            "n_clips": run_data['n_timepoints'],
+            "n_valence_raters": run_data['n_valence_raters'],
+            "n_arousal_raters": run_data['n_arousal_raters'],
+            "valence_icc": valence_icc if not pd.isna(valence_icc) else "NA",
+            "valence_pval": valence_pval if not pd.isna(valence_pval) else "NA",
+            "valence_reliability": val_reliability,
+            "valence_suitable_for_averaging": valence_suitable_for_averaging,
+            "arousal_icc": arousal_icc if not pd.isna(arousal_icc) else "NA",
+            "arousal_pval": arousal_pval if not pd.isna(arousal_pval) else "NA",
+            "arousal_reliability": aro_reliability,
+            "arousal_suitable_for_averaging": arousal_suitable_for_averaging,
+            "valence_arousal_correlation": correlation if not pd.isna(correlation) else "NA",
+            "valence_arousal_corr_pval": corr_pvalue if not pd.isna(corr_pvalue) else "NA",
+            "run_recommendation": run_recommendation,
+            "emotions_for_averaging": ', '.join(emotions_for_averaging) if emotions_for_averaging else 'none'
+        }
+        
+        all_results.append(run_results)
+
+    # Save comprehensive results for all runs
+    print(f"\n{'='*60}")
+    print("SAVING COMPREHENSIVE RESULTS")
+    print("="*60)
+    
+    if not all_results:
+        print("No runs were successfully processed.")
+        return
+    
+    results_df = pd.DataFrame(all_results)
 
     # Save results to file
     output_dir = Path("derivatives/caps/interrater")
@@ -475,33 +679,40 @@ def main():
     results_df.to_csv(results_file, sep="\t", index=False)
     print(f"Results saved to: {results_file}")
 
-    # Save aggregated time series if available
-    if aggregated_series['valence_timeseries'] is not None or aggregated_series['arousal_timeseries'] is not None:
-        timeseries_data = {
-            'onset': onset_times,
-            'valence_aggregated': aggregated_series['valence_timeseries'] if aggregated_series['valence_timeseries'] is not None else [np.nan] * len(onset_times),
-            'arousal_aggregated': aggregated_series['arousal_timeseries'] if aggregated_series['arousal_timeseries'] is not None else [np.nan] * len(onset_times),
-            'valence_reliable': [valence_reliable] * len(onset_times),
-            'arousal_reliable': [arousal_reliable] * len(onset_times)
-        }
-        
-        timeseries_df = pd.DataFrame(timeseries_data)
-        timeseries_file = output_dir / "aggregated_emotion_timeseries.tsv"
-        timeseries_df.to_csv(timeseries_file, sep="\t", index=False)
-        print(f"Aggregated time series saved to: {timeseries_file}")
+    # Print summary statistics
+    print(f"\nSUMMARY - CAN I AVERAGE THE RATERS? ({len(all_results)} RUNS)")
+    print("-" * 60)
+    
+    suitable_valence = results_df['valence_suitable_for_averaging'].sum()
+    suitable_arousal = results_df['arousal_suitable_for_averaging'].sum()
+    suitable_both = (results_df['valence_suitable_for_averaging'] & results_df['arousal_suitable_for_averaging']).sum()
+    
+    average_both = (results_df['run_recommendation'] == 'AVERAGE BOTH EMOTIONS').sum()
+    average_valence_only = (results_df['run_recommendation'] == 'AVERAGE VALENCE ONLY').sum()
+    average_arousal_only = (results_df['run_recommendation'] == 'AVERAGE AROUSAL ONLY').sum()
+    dont_average = (results_df['run_recommendation'] == "DON'T AVERAGE").sum()
+    
+    print(f"✅ AVERAGE BOTH emotions: {average_both}/{len(all_results)} runs ({average_both/len(all_results)*100:.1f}%)")
+    print(f"⚠️  AVERAGE VALENCE only: {average_valence_only}/{len(all_results)} runs ({average_valence_only/len(all_results)*100:.1f}%)")
+    print(f"⚠️  AVERAGE AROUSAL only: {average_arousal_only}/{len(all_results)} runs ({average_arousal_only/len(all_results)*100:.1f}%)")
+    print(f"❌ DON'T AVERAGE either: {dont_average}/{len(all_results)} runs ({dont_average/len(all_results)*100:.1f}%)")
+    
+    print(f"\nBy emotion dimension:")
+    print(f"Valence suitable for averaging: {suitable_valence}/{len(all_results)} ({suitable_valence/len(all_results)*100:.1f}%)")
+    print(f"Arousal suitable for averaging: {suitable_arousal}/{len(all_results)} ({suitable_arousal/len(all_results)*100:.1f}%)")
 
     print("\n" + "=" * 60)
     print("INTER-RATER RELIABILITY ANALYSIS COMPLETE")
     print("=" * 60)
-    print("Next steps:")
-    if final_recommendation == "PROCEED WITH ANALYSIS":
-        print("✓ This run can proceed to brain analysis")
-        print("✓ Use aggregated emotion time series for further analysis")
-    elif final_recommendation == "PROCEED WITH CAUTION":
-        print("⚠️  Proceed with caution - only partial emotion data reliable")
-    else:
-        print("❌ Exclude this run from further analysis")
-        print("❌ Consider obtaining additional ratings from new annotators")
+    print("BOTTOM LINE:")
+    if average_both > 0:
+        print(f"✅ You can safely average BOTH emotions for {average_both} runs")
+    if average_valence_only > 0:
+        print(f"⚠️  You can average VALENCE only for {average_valence_only} additional runs")
+    if average_arousal_only > 0:
+        print(f"⚠️  You can average AROUSAL only for {average_arousal_only} additional runs")
+    if dont_average > 0:
+        print(f"❌ DON'T average either emotion for {dont_average} runs (poor reliability)")
 
 
 if __name__ == "__main__":
