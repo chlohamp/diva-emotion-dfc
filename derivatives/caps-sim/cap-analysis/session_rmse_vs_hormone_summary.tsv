@@ -1,5 +1,0 @@
-participant_id	emotion	n_sessions	spearman_rho	p_value
-sub-Bubbles	arousal	4	0.7999999999999999	0.20000000000000007
-sub-Bubbles	valence	4	0.0	1.0
-sub-Buttercup	arousal	4	0.19999999999999998	0.8
-sub-Buttercup	valence	4	0.39999999999999997	0.6

@@ -1,5 +1,0 @@
-participant_id	session	emotion	rmse	r2	ar1_detected	n_test
-sub-Bubbles	1	valence	0.9217544736606154	0.15036869028664201	False	60
-sub-Bubbles	2	valence	0.9364916936646963	0.12298330769702881	False	60
-sub-Bubbles	3	valence	0.9176592282996994	0.1579015407164004	False	60
-sub-Bubbles	4	valence	0.906687280017669	0.17791817625416106	True	60

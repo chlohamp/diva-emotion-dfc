@@ -1,5 +1,0 @@
-participant_id	session	emotion	rmse	r2	ar1_detected	n_test
-sub-Bubbles	1	arousal	0.9231835303381647	0.14773216931236277	False	60
-sub-Bubbles	2	arousal	1.008418244360597	-0.016907355559308668	False	60
-sub-Bubbles	3	arousal	0.975561042322229	0.04828065270316628	False	60
-sub-Bubbles	4	arousal	0.9465756694313429	0.10399450204060534	False	60

@@ -1,4 +1,9 @@
-/dset/
-/.DS_Store
+/dset/annotations/
+/dset/sub-Blossom/
+/dset/sub-Bubbles/
+/dset/sub-Buttercup/
+/dset/participants.tsv
+/dset/participants-hormone.tsv
 /.venv/
-/derivatives/.DS_Store
+.DS_Store
+/dset/

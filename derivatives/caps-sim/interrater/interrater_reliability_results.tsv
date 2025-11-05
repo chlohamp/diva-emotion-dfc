@@ -1,2 +1,0 @@
-run	valence_icc	arousal_icc	valence_pval	arousal_pval	valence_significant	arousal_significant	valence_z	arousal_z
-run-1	-0.05177993527508093	0.0998128509045539	0.5681199544671154	0.36667214985421914	False	False	-0.05182628665633512	0.10014631181199962

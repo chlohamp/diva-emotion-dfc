@@ -1,5 +1,0 @@
-participant_id	session	emotion	rmse	r2	ar1_detected	n_test
-sub-Buttercup	1	arousal	0.8459590594123163	0.28435326979822895	False	60
-sub-Buttercup	2	arousal	0.8755099015915887	0.2334824122150866	False	60
-sub-Buttercup	3	arousal	0.9831218939781706	0.03347134158077458	False	60
-sub-Buttercup	4	arousal	0.8623476379945757	0.2563565512451763	False	60
