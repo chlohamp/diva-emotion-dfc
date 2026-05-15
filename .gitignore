@@ -7,3 +7,4 @@
 /.venv/
 .DS_Store
 /dset/
+extract_sheets.py
