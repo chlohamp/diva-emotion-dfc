@@ -7,4 +7,7 @@
 /.venv/
 .DS_Store
 /dset/
-extract_sheets.py
+0a-extract_sheets.py
+/old-code/
+/nilearn_cache/
+/0-extract_sheets.py
